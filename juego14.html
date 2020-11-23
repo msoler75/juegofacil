@@ -1,0 +1,1122 @@
+<script>
+	
+	
+var estado_juego = "inicio";
+
+// modelo de datos del mundo
+var mundo = {
+		
+	nivel : {
+			suelo :      [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0, 3, 3, 0, 0, 0, 0, 0, 0, 0, 5, 5, 5, 5, 5, 5, 5,  4, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 2, 2, 0, 2, 2, 2, 2, 2, 2],
+			plataformas: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 3, 0, 0, 0, 5, 0, 7, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 4, 5, 6, 0, 0, 3, 3],
+			monedas:     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 8, 8, 9, 9, 7, 7, 6, 6, 6, 0, 0, 0, 0, 1, 1, 1, 1, 1, 6, 3, 4, 5, 6, 5, 4, 3, 2, 3, 2, 1, 1, 3, 3, 4, 4, 4, 3, 2, 1, 1, 1, 1, 1],
+			pajaros :    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0,0, 0, 0, 0, 12, 0, 0, 0, 0,19, 0, 0, 0, 0, 20, 0, 0, 0, 0, 0, 0, 17, 0, 0, 0, 0, 18, 0, 0, 0, 13, 0, 0, 0, 0, 16, 0, 0, 0, 12, 0, 3, 0, 5],
+			tortugas:    [16, 25, 35, 45],
+			flores:      [8, 12, 24, 33, 54, 65, 55, 60, 90],
+			arboles:     [10, 120, 29, 40, 60, 90],
+			chequeos:    [14, 26, 40, 68],
+			sprites: 
+			{	
+				suelo: {
+					ancho: 160
+				}				
+			},
+			gravedad: .45,
+			bloque : {
+				ancho: 112,
+				alto: 50
+			},
+			pendiente_actual : 1,
+			
+			enemigos : {
+				
+				pajaro : {
+					velocidad : -2,	
+					ancho: 50,
+					alto: 40,			
+					esperaFrames: 20,  
+					animacion: ["pajaro1", "pajaro2", "pajaro3", "pajaro4"],
+				},
+				
+				tortuga : {
+					velocidad : -.5,
+					ancho: 90,
+					alto: 44,			
+					esperaFrames: 10,  
+					animacion: ["tortuga1", "tortuga2", "tortuga3"],
+				}
+				
+			},
+			
+			objetos : 
+			{
+				nube : {
+					probabilidad: .08,
+					velocidad : .1,			
+					esperaFrames: 0,  
+					sprite: ["nube1", "nube2"],
+				},
+				
+				moneda : {
+					esperaFrames: 9,  
+					animacion: ["moneda1", "moneda2", "moneda3", "moneda4"],				
+				},
+				
+				flor : {
+					sprite: ["flor1"]
+				},
+				
+				arbol: {
+					sprite: ["arbol1"]
+				},
+			},
+		},
+		
+	
+	
+	camara :  {
+		alto: 500,
+		ancho: 700,
+		x: 0
+	},
+	
+	jugador: {
+		espera_inicial: 50,  
+		caida: -10,		
+		ancho: 38*2,
+		alto: 58*2,
+		inmunidad: 160,
+		x0 : 1220,   // 2540 // 3240
+		y: 1,
+		puntuacion: 0,
+		salto: 9,	
+		impulso_boton: .3,	
+		impulso_frames: 80, // número de frames en que se mantiene el impulso de salto con el botón pulsado
+		velocidad : 3.9,
+		velocidad_x : 1,
+		frame: 0,
+		frameContador: 0,
+		esperaFrames: 4,  // definir el tiempo de cambio de cada imagen
+		animaciones: {
+			parado: ["parado1"],
+			corriendo: ["corriendo1", "corriendo2", "corriendo3", "corriendo4", "corriendo5", "corriendo6", "corriendo7", "corriendo8", "corriendo9", "corriendo10"],
+			muerto: ["muerto1", "muerto2"],
+			saltando: ["saltando1"],
+			cayendo: ["cayendo1"]
+		},
+		estado: "corriendo"
+	},	
+
+};
+
+// programa principal
+
+
+
+var ctx, ctx2;
+
+document.addEventListener("DOMContentLoaded", function()
+{
+	inicializacion();
+});
+
+function inicializacion()
+{	
+	
+	ctx = iniciar_canvas("canvas_juego");
+	ctx2 = iniciar_canvas("stats");
+
+	document.addEventListener("touchstart", boton);
+	document.addEventListener("touchend", suelta_boton);
+	document.addEventListener("touchleave", suelta_boton);
+	document.addEventListener("touchcancel", suelta_boton);
+	
+	document.addEventListener("mousedown", boton);
+	document.addEventListener("keydown", comprueba_teclado);
+	document.addEventListener("keyup", suelta_boton);													 											  
+	document.addEventListener("mouseup", suelta_boton);
+	
+	bucle();
+}
+
+function iniciar_canvas(id)
+{
+	let canvas = document.getElementById(id);	
+	
+	canvas.width = window.innerWidth;
+	canvas.height = window.innerHeight;
+	
+	mundo.camara.ancho = canvas.width;
+	mundo.camara.alto = canvas.height;	
+	
+	let ctx = canvas.getContext("2d");
+	ctx.imageSmoothingEnabled = false;
+	
+	return ctx;
+}
+
+function generar_enemigos() 
+{
+	let ancho = mundo.nivel.bloque.ancho; 
+	let alto = mundo.nivel.bloque.alto; 
+	
+	mundo.pajaros = []; 
+	for(var i in mundo.nivel.pajaros) 
+	{ 	
+		let altura = mundo.nivel.pajaros[i];
+		if(altura)
+		mundo.pajaros.push( 
+		{ 
+			velocidad: mundo.nivel.enemigos.pajaro.velocidad, 
+			x: i * ancho, 
+			y: altura * alto, 
+			frame: 0, 
+			frameContador: 0, 
+		}); 
+	} 
+	
+	mundo.tortugas = []; 
+	for(var i of mundo.nivel.tortugas) 
+	{ 			
+		mundo.tortugas.push( 
+		{ 
+			velocidad: mundo.nivel.enemigos.tortuga.velocidad, 
+			x: i * ancho, 
+			y: 0, 
+			frame: 0, 
+			frameContador: 0, 
+		}); 
+	} 
+} 
+
+
+function generar_objetos() 
+{ 
+	let ancho = mundo.nivel.bloque.ancho; 
+	let alto = mundo.nivel.bloque.alto; 
+	let acumulador = 60.2; 
+	let total_ancho_nivel = mundo.nivel.suelo.length * mundo.nivel.bloque.ancho;
+	mundo.nubes = [];
+	for(var i = 0; i < total_ancho_nivel; i += 50)
+	{
+		if(Math.random() < acumulador)
+		{		
+			acumulador = 0;
+			let altura = Math.random() * mundo.camara.alto;
+			mundo.nubes.push(
+			{
+				velocidad: mundo.nivel.objetos.nube.velocidad,			
+				x: i - 500,
+				y: altura,
+				spriteNum: Math.floor(i/50) % mundo.nivel.objetos.nube.sprite.length
+			});
+		}
+		
+		acumulador = acumulador + mundo.nivel.objetos.nube.probabilidad;
+	}	 
+	
+	// creamos las monedas
+	mundo.monedas = []; 
+	for(var i in mundo.nivel.monedas) 
+	{ 		
+		let altura = mundo.nivel.monedas[i];
+		if(altura)
+		{
+			let altura_suelo = mundo.nivel.suelo[i];
+			mundo.monedas.push( 
+			{ 
+				velocidad: mundo.nivel.objetos.moneda,			
+				x: i * ancho,
+				y: (altura_suelo + altura)  * alto,
+				frame: 0,
+				frameContador: 0,
+			});
+		}		
+	}
+	
+	
+	// creamos las flores
+	mundo.flores = []; 
+	for(var i of mundo.nivel.flores) 
+	{ 		
+		let altura_suelo = mundo.nivel.suelo[i];
+		if(altura_suelo)
+		mundo.flores.push( 
+			{ 
+				x: i * ancho,
+				y: altura_suelo * alto
+			});
+	}
+	
+	// creamos los arboles
+	mundo.arboles = []; 
+	for(var i of mundo.nivel.arboles) 
+	{ 		
+		let altura_suelo = mundo.nivel.suelo[i];
+		mundo.arboles.push( 
+			{ 
+				x: i * ancho,
+				y: altura_suelo * alto
+			});
+	}
+	
+}
+
+function iniciar_nivel()
+{
+	generar_enemigos();
+	
+	generar_objetos();
+	
+	colocar_jugador();
+}
+
+function colocar_jugador()
+{
+	estado_juego = "empezando";
+	
+	mundo.jugador.velocidad_x = 0;
+	mundo.jugador.x = mundo.jugador.x0;
+	mundo.jugador.y = ctx.canvas.height + 50;
+	mundo.jugador.contador_inmunidad = mundo.jugador.inmunidad;
+	
+	mundo.camara.x = Math.max(0, mundo.jugador.x - mundo.camara.ancho / 2);
+	
+	jugador_nuevo_estado("cayendo", true);
+}
+
+function bucle(t)
+{		
+	// pedimos el siguiente frame
+	requestAnimationFrame(bucle);	
+	
+	calcula_refresco(t);
+	
+	switch(estado_juego)
+	{
+		case "inicio":
+		
+			dibuja_inicio(ctx);
+			break;
+		
+		case "empezando":
+		case "jugando":
+		
+		
+		// calculamos la posición del jugador	
+		avanza_jugador();
+		
+		// calculamos la posición de la cámara
+		avanza_camara();	
+		
+		// calculamos la posición de las nubes
+		mueve_objetos();	
+		
+		// calculamos la posición de los enemigos
+		mueve_enemigos();
+		
+		if(estado_juego == "jugando")
+		{
+			// detecta colisiones con enemigos u objetos
+			detecta_colisiones();		
+		}	
+		
+		
+		// desde aquí va todo el dibujado		
+		// borramos lienzo
+		borrar_canvas(ctx);
+		
+		// dibujamos el cielo, las montañas y fondo		
+		dibuja_fondo(ctx);
+
+		// dibujamos los objetos
+		dibuja_objetos(ctx);
+
+		// dibujamos el suelo del nivel	
+		dibuja_suelo(ctx);		
+		
+		// dibujamos el suelo del nivel	
+		dibuja_plataformas(ctx);
+		
+		// dibujamos los enemigos
+		dibuja_enemigos(ctx);
+			
+		// después dibujaremos al jugador
+		dibuja_jugador(ctx);
+		
+		// puntuacion
+		dibuja_puntuacion(ctx);
+		
+		//dibuja estadísticas y otras informaciones
+		estadisticas(ctx);
+		
+	}
+		
+}
+
+
+function calcula_altura_terreno(x, y)
+{
+	if(!x)
+		x = 0;
+	let ancho_bloque = mundo.nivel.bloque.ancho;
+	let alto_bloque = mundo.nivel.bloque.alto;	
+	let bloque_num = Math.floor(x / mundo.nivel.bloque.ancho);	
+	let altura0 = mundo.nivel.suelo[bloque_num - 1] ;
+	if(!altura0) altura0 = 1;
+	let altura1 = mundo.nivel.suelo[bloque_num];
+	let altura2 = mundo.nivel.suelo[bloque_num + 1];
+	let ratio = (x % ancho_bloque) / ancho_bloque;
+	
+	// calcula la altura del terreno según el bloque donde estemos ubicados y la pendiente
+	let altura_terreno =  altura1 * alto_bloque + ratio * (altura2 - altura1) * alto_bloque;	
+	if(altura1 == 0 || altura2 == 0 )
+		altura_terreno = 0;  // precipicio
+		
+		
+	// calculamos la pendiente actual
+	// https://stackoverrun.com/es/q/2520792
+	let dy = (altura2 - altura1) * alto_bloque;
+	let dx = mundo.nivel.bloque.ancho;
+	let theta = Math.atan(dy/dx);
+	if(!theta) theta = 0;
+	//if(!offset)
+		mundo.nivel.theta = theta;	
+	
+	// comprobamos si estamos encima de una plataforma
+	let altura_plataforma = mundo.nivel.plataformas[bloque_num] * alto_bloque;
+	if(altura_plataforma != 0 && y > altura_plataforma)
+	{
+		altura_terreno = altura_plataforma;
+		mundo.nivel.theta = 0;
+	}
+		
+	return altura_terreno;
+}
+
+function avanza_jugador()
+{
+	// avanza hacia adelante
+	if(mundo.jugador.estado != "muerto" && mundo.jugador.estado != "parado")
+	{		
+		if(delta)			
+			mundo.jugador.x = mundo.jugador.x + mundo.jugador.velocidad_x * 1; //delta/(1000/60);
+			
+		for(var chequeo of mundo.nivel.chequeos)
+		{
+			if(mundo.jugador.x >= chequeo * mundo.nivel.bloque.ancho)
+			{
+				mundo.jugador.x0 = chequeo * mundo.nivel.bloque.ancho;
+			}
+		}
+	}
+	
+	if(mundo.jugador.estado != "muerto")
+	{
+		if(mundo.jugador.contador_inmunidad > 0)
+			mundo.jugador.contador_inmunidad--;
+	}
+
+	let altura_terreno = calcula_altura_terreno(mundo.jugador.x, mundo.jugador.y);
+	
+	switch(mundo.jugador.estado)
+	{
+		case "muerto":
+		mundo.jugador.y += mundo.jugador.caida;
+		mundo.jugador.caida -= mundo.nivel.gravedad;
+		
+		if(mundo.jugador.y < -200)
+			colocar_jugador();
+		break;
+		
+		
+		case "parado":
+		
+		if(mundo.jugador.contador_inicial-- < 0)
+		{
+			jugador_nuevo_estado("corriendo");	
+			mundo.jugador.velocidad_x = 0;
+		}
+		
+		break;
+		
+		case "corriendo":
+		
+		// comprobamos si el jugador empieza a caer debido a la falta de suelo
+		if(mundo.jugador.y - mundo.jugador.alto / 2 > altura_terreno + 7)	
+		{
+			jugador_nuevo_estado("cayendo");
+			break;
+		}
+			
+		
+		// la velocidad en el eje X del jugador depende del ángulo de la pendiente
+		if(mundo.nivel.theta>0.3)
+			mundo.jugador.velocidad_x = mundo.jugador.velocidad * Math.cos(mundo.nivel.pendiente_actual);
+		else
+			mundo.jugador.velocidad_x = mundo.jugador.velocidad
+		
+		if(mundo.jugador.estado == "corriendo" || mundo.jugador.estado == "parado")
+			mundo.jugador.y = altura_terreno + mundo.jugador.alto / 2;
+		
+		break;
+		
+
+		case "cayendo":
+		case "saltando":		
+		
+		/* comprobamos si aterriza contra el suelo
+		
+		
+					ANTES DEL MOVIMIENTO								APLICANDO VECTOR DE CAIDA
+		
+							   -----                               				 
+							  |     |     |                        				 
+			altura_jugador    |  x  |     |  caída                               
+							  |	    |    \|/                       				 
+							   -----	                           				      -----
+							                                       				     |     |    
+			altura_terreno ----------------                        altura_terreno ---|--x--|-----------
+		                                                                             |	   |   
+		                                                                              -----	  
+		
+		*/
+		
+		altura_terreno_anticipado = calcula_altura_terreno( mundo.jugador.x + mundo.jugador.ancho / 2 * 0.9, mundo.jugador.y);
+		
+		// detectar si choca contra un muro
+		if(altura_terreno == 0 &&  // si estamos saltando un precipicio
+			altura_terreno_anticipado > 0 &&  mundo.jugador.velocidad_x &&
+			mundo.jugador.y - mundo.jugador.alto / 2 < altura_terreno_anticipado 			
+			)
+		{
+			jugador_nuevo_estado("muerto");	
+			break;
+		} 
+		
+		if(altura_terreno==0 && altura_terreno_anticipado>0)
+			altura_terreno = altura_terreno_anticipado;
+			
+		if(altura_terreno > 0 && mundo.jugador.caida <= 0 
+			 /*&&  mundo.jugador.y - mundo.jugador.alto / 2 >= altura_terreno - 5 */
+			&& mundo.jugador.y - mundo.jugador.alto / 2 + mundo.jugador.caida  <= altura_terreno )
+		{	
+			mundo.jugador.y = altura_terreno + mundo.jugador.alto / 2;
+			mundo.jugador.caida = 0;
+			
+			if(estado_juego == "empezando")
+			{
+				estado_juego = "jugando";
+				jugador_nuevo_estado("parado");	
+				mundo.jugador.contador_inicial = mundo.jugador.espera_inicial;
+			}
+			else
+			{
+				jugador_nuevo_estado("corriendo");	
+			}
+		}
+		else 		
+		{
+			//cae  ó salta
+			mundo.jugador.y = mundo.jugador.y + mundo.jugador.caida;	
+			
+			if(mundo.jugador.contador_impulso -- > 0 && boton_pulsado)
+				mundo.jugador.caida += mundo.jugador.impulso_boton * mundo.jugador.contador_impulso / mundo.jugador.impulso_frames;
+			
+			// la gravedad hace su trabajo de aceleración
+			mundo.jugador.caida -= mundo.nivel.gravedad;
+		}
+				
+		
+		break;
+	}
+	
+	
+}
+
+function mueve_enemigos()
+{
+	for(var pajaro of mundo.pajaros)
+	{
+		if(pajaro.x < mundo.camara.x - mundo.camara.ancho || pajaro.x > mundo.camara.x + mundo.camara.ancho)
+			continue;
+		pajaro.x += mundo.nivel.enemigos.pajaro.velocidad;
+	}
+	
+	for(var tortuga of mundo.tortugas)
+	{
+		// si la tortuga llega a un precipicio da la vuelta
+		if(calcula_altura_terreno(tortuga.x + tortuga.velocidad, tortuga.y) == 0)
+		{
+			tortuga.velocidad = -tortuga.velocidad;
+		}
+		
+		tortuga.x = tortuga.x + tortuga.velocidad;
+		tortuga.y = calcula_altura_terreno(tortuga.x, tortuga.y) + mundo.nivel.enemigos.tortuga.alto / 2;
+	}
+}
+
+
+function mueve_objetos()
+{
+	for(var nube of mundo.nubes)
+	{
+		nube.x += mundo.nivel.objetos.nube.velocidad;
+	}
+	
+}
+
+
+function detecta_colisiones()
+{
+	if(mundo.jugador.estado == "muerto")
+		return;
+		
+	if(mundo.jugador.y <= - mundo.jugador.alto / 2)
+		jugador_nuevo_estado("muerto");	
+
+	if(mundo.jugador.contador_inmunidad > 0)
+		return;
+
+	// enemigos
+	let jugador = mundo.jugador;
+	for(var pajaro of mundo.pajaros)
+	{
+		let dx = Math.abs(pajaro.x - jugador.x);
+		let dy = Math.abs(pajaro.y - jugador.y);
+		
+		if(dx < jugador.ancho / 2 + 0.8 * mundo.nivel.enemigos.pajaro.ancho / 2 &&
+		   dy < jugador.alto / 2 + 0.3 * mundo.nivel.enemigos.pajaro.alto / 2)
+		   {			
+			jugador_nuevo_estado("muerto");
+			mundo.jugador.caida = mundo.jugador.salto / 1.4;
+		   }
+	}
+	
+	for(var tortuga of mundo.tortugas)
+	{
+		let dx = Math.abs(tortuga.x - jugador.x);
+		let dy = Math.abs(tortuga.y - jugador.y);
+		
+		if(dx < jugador.ancho / 2 + 0.8 * mundo.nivel.enemigos.tortuga.ancho / 2 &&
+		   dy < jugador.alto / 2 + 0.9 * mundo.nivel.enemigos.tortuga.alto / 2)
+		   {	
+			   
+			   if((mundo.jugador.estado == "cayendo" || mundo.jugador.estado == "saltando" )
+				&& jugador.y > tortuga.y + mundo.nivel.enemigos.tortuga.alto / 3
+			   )
+			   {
+				   jugador_saltar(true);					   
+			   }
+			   else
+			   {
+					jugador_nuevo_estado("muerto");
+					mundo.jugador.caida = mundo.jugador.salto / 1.4;
+			   }
+		   }
+	}
+	
+	// monedas
+	for(var moneda of mundo.monedas)
+	{
+		if( moneda.recogida) continue;
+	
+		let dx = Math.abs(moneda.x - jugador.x);
+		let dy = Math.abs(moneda.y - jugador.y);
+		
+		if(dx < jugador.ancho / 2 + 0.8 * mundo.nivel.objetos.moneda.ancho / 2 &&
+		   dy < jugador.alto / 2 + 0.8 * mundo.nivel.objetos.moneda.alto / 2)
+		   {			
+			  moneda.recogida = true;
+			  mundo.jugador.puntuacion = mundo.jugador.puntuacion + 50;
+		   }
+	}	
+}
+
+function avanza_camara()
+{
+	if(mundo.jugador.estado == "muerto" || mundo.jugador.estado == "parado") return;
+	
+	// avanza hacia adelante
+	if(mundo.jugador.x > mundo.camara.x + mundo.camara.ancho / 3)
+		mundo.camara.x = mundo.jugador.x - mundo.camara.ancho / 3;
+}
+
+var boton_pulsado = false;
+function boton()
+{
+	boton_pulsado = true;
+	
+	if(estado_juego == "inicio")
+		iniciar_nivel();
+			
+	if(estado_juego == "jugando")
+		jugador_saltar();	
+}
+
+
+function suelta_boton(evt)
+{
+	boton_pulsado = false; 
+	mundo.jugador.contador_impulso = 0;
+	evt.preventDefault();
+}
+
+function comprueba_teclado(evt)
+{
+	if(evt.code == "Space")
+	{	
+		boton();
+		evt.preventDefault();
+	}
+}
+
+function jugador_saltar(forzar_salto)
+{
+	if(!forzar_salto)
+	{
+		if(mundo.jugador.estado == "muerto" ||
+			mundo.jugador.estado == "saltando"  ||
+			mundo.jugador.estado == "parado"  
+		) return;
+	
+		// si está cayendo o saltando no hace nada
+		if(mundo.jugador.caida != 0)
+			return;
+	}
+		
+	mundo.jugador.caida = mundo.jugador.salto;
+	mundo.jugador.contador_impulso = mundo.jugador.impulso_frames;
+	
+	jugador_nuevo_estado("saltando");
+}
+
+
+function borrar_canvas(ctx)
+{
+	// truco para borrar canvas: cambiarle el tamaño a cero, y luego restaurar el tamaño
+	ctx.canvas.width = 0;
+	ctx.canvas.height = 0;
+	ctx.canvas.width = window.innerWidth;;
+	ctx.canvas.height = window.innerHeight;
+}
+
+
+function h(y)
+{
+	return ctx.canvas.height - y;
+}
+
+var cielo;
+function dibuja_cielo(ctx)
+{
+	if(!cielo)
+	{
+		cielo = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
+		cielo.addColorStop(0 , "rgb(0, 100, 200)");
+		cielo.addColorStop(1 , "rgb(255, 255, 255)");
+	}
+	ctx.fillStyle = cielo;
+	ctx.fillRect( 0, 0, ctx.canvas.width, ctx.canvas.height );
+}
+
+function dibuja_nubes()
+{
+	let camx = mundo.camara.x / 10;
+	
+	for(let nube of mundo.nubes)
+	{
+		let numSprite = nube.spriteNum;
+		let imagen = document.getElementById(mundo.nivel.objetos.nube.sprite[numSprite]);
+		ctx.drawImage(imagen, nube.x - camx, h(nube.y)); 	
+	}	
+}
+
+function dibuja_fondo(ctx)
+{	
+	dibuja_cielo(ctx);
+	
+	dibuja_nubes(ctx);
+	
+	let montanyas = document.getElementById("montanyas");
+	ctx.drawImage(montanyas, 0, 0, ctx.canvas.width, ctx.canvas.height);
+}
+
+function dibuja_suelo(ctx)
+{
+	let ancho = mundo.nivel.bloque.ancho;
+	let alto = mundo.nivel.bloque.alto;	
+	
+	
+	// definimos el color de relleno
+	ctx.fillStyle = "rgb(25, 2, 0)"; 	
+	
+	// empezamos un path
+	ctx.beginPath();
+		
+	anterior = 0;
+	ctx.moveTo(0, h(0));
+	for(var i = 0; i < mundo.nivel.suelo.length; i++)
+	{	
+		let x = i * ancho;
+		let altura = mundo.nivel.suelo[i];
+		let y = altura * alto ;
+		if(altura==0)
+		{
+			// si es altura 0 hacemos un hoyo
+			ctx.lineTo(x - mundo.camara.x - ancho, h(y));			
+		}
+		else
+		if(anterior==0)
+		{
+			// si venimos de un hoyo...
+			ctx.lineTo(x - mundo.camara.x, h(0));			
+		}
+		ctx.lineTo(x - mundo.camara.x, h(y));		
+		
+		anterior = altura;
+	}
+	ctx.lineTo(ctx.canvas.width, h(0));
+	
+	//cerramos el path (camino)
+	ctx.closePath();
+	
+	ctx.save();
+	ctx.translate(-mundo.camara.x % mundo.nivel.sprites.suelo.ancho, 0);
+	// rellenamos el polígono (path) con el color de relleno
+	ctx.fill();
+	ctx.restore();
+	
+	
+	
+}
+
+
+function dibuja_plataformas(ctx)
+{
+	let ancho = mundo.nivel.bloque.ancho;
+	let alto = mundo.nivel.bloque.alto;	
+	
+	
+	// empezamos un path
+	let imagen = document.getElementById("block");
+	//ctx.fillStyle = "rgb(0, 80, 0)";
+		
+	anterior = 0;
+	for(var i = 0; i < mundo.nivel.plataformas.length; i++)
+	{	
+		let x = i * ancho;		
+		let altura = mundo.nivel.plataformas[i];		
+		let y = altura * alto;
+		ctx.drawImage(imagen, x - mundo.camara.x, h(y), ancho, alto);
+	}
+	
+}
+
+
+function dibuja_enemigos(ctx)
+{
+	let ancho = mundo.nivel.enemigos.pajaro.ancho;
+	let alto = mundo.nivel.enemigos.pajaro.alto;
+	
+	
+	for(var pajaro of mundo.pajaros)
+	{
+		let x = Math.floor(pajaro.x);
+		let y = Math.floor(pajaro.y);
+		
+		if(pajaro.frameContador == 0)
+		{
+			let numero_imagen = pajaro.frame + 1;
+			pajaro.imagen_actual = "pajaro" + numero_imagen;
+			pajaro.frame = pajaro.frame + 1;
+			if(pajaro.frame >= mundo.nivel.enemigos.pajaro.animacion.length )
+			{
+				pajaro.frame = 0;
+			}
+			pajaro.frameContador = mundo.nivel.enemigos.pajaro.esperaFrames;		
+		}
+		else
+			pajaro.frameContador --;
+			
+		var imagen = document.getElementById(pajaro.imagen_actual);
+		
+		ctx.drawImage(imagen, x - ancho / 2 - mundo.camara.x, h(y) + alto / 2, ancho, alto); 	
+	}
+	
+	
+	ancho = mundo.nivel.enemigos.tortuga.ancho;
+	alto = mundo.nivel.enemigos.tortuga.alto;
+	
+	
+	for(var i in mundo.tortugas)
+	{
+		let tortuga = mundo.tortugas[i];
+		let x = Math.floor(tortuga.x);
+		let y = Math.floor(tortuga.y);
+		
+		if(tortuga.frameContador == 0)
+		{
+			let numero_imagen = tortuga.frame + 1;
+			tortuga.imagen_actual = "tortuga" + numero_imagen;
+			tortuga.frame = tortuga.frame + 1;
+			if(tortuga.frame >= mundo.nivel.enemigos.tortuga.animacion.length )
+			{
+				tortuga.frame = 0;
+			}
+			tortuga.frameContador = mundo.nivel.enemigos.tortuga.esperaFrames;		
+		}
+		else
+			tortuga.frameContador --;
+			
+		var imagen = document.getElementById(tortuga.imagen_actual);
+		
+		// si la tortuga mira a la derecha, invertimos la imagen
+		if(tortuga.velocidad > 0)
+		{
+			ctx.save();
+			ctx.translate(x - mundo.camara.x, h(y) , ancho);
+			ctx.scale(-1, 1);
+			ctx.drawImage(imagen, - ancho / 2, - alto / 2, ancho, alto); 	
+			ctx.restore();
+		}
+		else
+			ctx.drawImage(imagen, x - mundo.camara.x - ancho / 2, h(y) - alto / 2, ancho, alto); 	
+	}
+	
+}
+
+function dibuja_monedas(ctx)
+{
+	
+	let	ancho = mundo.nivel.objetos.moneda.ancho;
+	let alto = mundo.nivel.objetos.moneda.alto;	
+	
+	for(var moneda of mundo.monedas)
+	{
+		if( moneda.recogida) continue;
+		
+		let x = moneda.x;
+		let y = moneda.y;
+		
+		if(moneda.frameContador == 0)
+		{
+			let numero_imagen = moneda.frame + 1;
+			moneda.imagen_actual = "moneda" + numero_imagen;
+			moneda.frame = moneda.frame + 1;
+			if(moneda.frame >= mundo.nivel.objetos.moneda.animacion.length )
+			{
+				moneda.frame = 0;
+			}
+			moneda.frameContador = mundo.nivel.objetos.moneda.esperaFrames;		
+		}
+		else
+			moneda.frameContador --;
+	
+		let imagen = document.getElementById(moneda.imagen_actual);
+		
+		ctx.drawImage(imagen, x - ancho / 2 - mundo.camara.x, h(y) - alto / 2); 	
+	}
+}
+
+
+
+function dibuja_vegetacion(ctx)
+{
+	
+	let	ancho = mundo.nivel.objetos.moneda.ancho;
+	let imagen = document.getElementById(mundo.nivel.objetos.flor.sprite);
+	
+	for(var flor of mundo.flores)
+	{
+		ctx.drawImage(imagen, flor.x - imagen.width / 2 - mundo.camara.x, h(flor.y) - imagen.height); 	
+	}	
+	
+	
+	imagen = document.getElementById(mundo.nivel.objetos.arbol.sprite);
+	
+	for(var arbol of mundo.arboles)
+	{
+		ctx.drawImage(imagen, arbol.x - imagen.width / 2 - mundo.camara.x, h(arbol.y) - imagen.height); 	
+	}
+}
+
+function dibuja_objetos(ctx)
+{
+	dibuja_monedas(ctx);
+	
+	dibuja_vegetacion(ctx);
+}
+
+function jugador_nuevo_estado(estado, reiniciar)
+{
+	if(mundo.jugador.estado != estado || reiniciar)
+	{
+		mundo.jugador.estado = "corriendo";
+		mundo.jugador.frame = 0;
+		mundo.jugador.frameContador = 0;
+		mundo.jugador.estado = estado;
+	}
+}
+
+function dibuja_jugador(ctx)
+{
+	let ancho = mundo.jugador.ancho;
+	let alto = mundo.jugador.alto;
+	let x = mundo.jugador.x;
+	let y = mundo.jugador.y; 
+	
+	
+	if(mundo.jugador.frameContador == 0)
+	{
+		let numero_imagen = mundo.jugador.frame + 1;
+		mundo.jugador.imagen_actual = mundo.jugador.estado + numero_imagen;
+		mundo.jugador.frame = mundo.jugador.frame + 1;
+		if(mundo.jugador.frame >= mundo.jugador.animaciones[mundo.jugador.estado].length)
+		{
+			mundo.jugador.frame = 0;
+		}
+		mundo.jugador.frameContador = mundo.jugador.esperaFrames;		
+	}
+	else
+		mundo.jugador.frameContador --;
+	
+	var imagen = document.getElementById(mundo.jugador.imagen_actual);
+	
+	
+	// dibujamos el sprite
+	if(imagen)
+	{
+		ctx.save();		
+		if(!mundo.jugador.contador_inmunidad || Math.floor(mundo.jugador.contador_inmunidad / 10) % 2 == 1)
+			ctx.globalAlpha = 1;
+		else
+			ctx.globalAlpha = .4;
+		ctx.drawImage(imagen, x - ancho / 2 - mundo.camara.x, h(y) - alto / 2, ancho, alto); 	
+		ctx.restore();
+	}
+	
+}
+
+function dibuja_inicio(ctx)
+{
+	ctx.font = "30px Arial";
+	ctx.fillStyle = "white";
+	ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);	
+	ctx.fillStyle = "blue";
+	ctx.textAlign = "center";
+	ctx.fillText("Haz click para comenzar", ctx.canvas.width / 2, ctx.canvas.height / 2 );
+}
+
+
+
+
+function dibuja_puntuacion(ctx)
+{
+	ctx.font = "30px Arial";
+	//ctx.fillStyle = "white";
+	//ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);	
+	ctx.fillStyle = "rgb(100, 40, 0)";
+	ctx.textAlign = "left";
+	ctx.fillText(mundo.jugador.puntuacion, 20, 40);
+}
+
+
+var delta, t_ahora, t_anterior = 0;
+
+function calcula_refresco(t)
+{
+	t_ahora = t;
+	delta = Math.min(20, t_ahora - t_anterior);
+	t_anterior = t_ahora;
+	//console.log(delta);	
+}
+
+var stats = {
+		n: 0
+	};
+function estadisticas(ctx)
+{	
+	stats.frameRatio = 60 / (1000 / delta);
+	
+	var i = 20;
+	let x = i * mundo.nivel.bloque.ancho - mundo.camara.x;
+	let altura = mundo.nivel.suelo[i];
+	
+	stats.x_ideal = stats.x_anterior - mundo.jugador.velocidad_x * delta/(1000/60);
+	stats.x_real = x;
+	stats.x_anterior = stats.x_real;
+	
+	// posicion X del jugador
+	ctx2.fillStyle = "rgb(150, 255, 50)";
+	ctx2.fillRect(stats.n, 50 + stats.x_ideal - stats.x_real,1,1);	
+	
+	/// estadísticas
+	ctx2.fillStyle = "rgb(255, 0, 0)";
+	ctx2.fillRect(stats.n, stats.frameRatio*100,1,1);	
+	
+	stats.n++;
+	
+	// FPS
+	ctx.font = "30px Arial";
+	ctx.fillStyle = "rgb(100, 40, 0)";
+	ctx.textAlign = "right";
+	ctx.fillText(Math.round(600/stats.frameRatio) / 10, ctx.canvas.width - 20, 40);
+	
+	
+	// posicion de bloque
+	ctx.textAlign = "center";
+	let pos = Math.floor(mundo.jugador.x / mundo.nivel.bloque.ancho);
+	ctx.fillText(pos, ctx.canvas.width / 2, 40);
+}
+
+
+</script>
+
+<canvas id="canvas_juego"></canvas>
+<canvas id="stats"></canvas>
+
+<style>
+	html {background: black}
+	html,body {margin:0; padding: 0}
+	img {display: none}	
+	canvas {		
+		width: 100%; height: 100%
+	}
+	#stats {position: absolute; left: 0; top: 0; z-index: 1}
+	
+</style>
+
+
+<img src="sprites/jug_red clone.png" id="parado1">
+<img src="sprites/jug_red_c00.png" id="corriendo1">
+<img src="sprites/jug_red_c01.png" id="corriendo2">
+<img src="sprites/jug_red_c02.png" id="corriendo3">
+<img src="sprites/jug_red_c03.png" id="corriendo4">
+<img src="sprites/jug_red_c04.png" id="corriendo5">
+<img src="sprites/jug_red_c05.png" id="corriendo6">
+<img src="sprites/jug_red_c06.png" id="corriendo7">
+<img src="sprites/jug_red_c07.png" id="corriendo8">
+<img src="sprites/jug_red_c08.png" id="corriendo9">
+<img src="sprites/jug_red_c09.png" id="corriendo10">
+<img src="sprites/jug_red_c00.png" id="muerto1">
+<img src="sprites/jug_red_c04.png" id="muerto2">
+<img src="sprites/jug_red_c00.png" id="saltando1">
+<img src="sprites/jug_red_c02.png" id="cayendo1">
+<img src="sprites/pajarob0.png" id="pajaro1">
+<img src="sprites/pajarob1.png" id="pajaro2">
+<img src="sprites/pajarob2.png" id="pajaro3">
+<img src="sprites/pajarob3.png" id="pajaro4">
+<img src="sprites/turtlebet0.png" id="tortuga1">
+<img src="sprites/turtlebet1.png" id="tortuga2">
+<img src="sprites/turtlebet2.png" id="tortuga3">
+<img src="sprites/cloud1.png" id="nube1">
+<img src="sprites/cloud2.png" id="nube2">
+<img src="sprites/moneda1.png" id="moneda1">
+<img src="sprites/moneda2.png" id="moneda2">
+<img src="sprites/moneda3.png" id="moneda3">
+<img src="sprites/moneda4.png" id="moneda4">
+<img src="sprites/block.png" id="block">
+<img src="sprites/flor.png" id="flor1">
+<img src="sprites/fondo.png" id="montanyas">
+<img src="sprites/tree0.png" id="arbol1">
