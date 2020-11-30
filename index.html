@@ -1,0 +1,3547 @@
+<html>
+<meta name="viewport" content="width=device-width, user-scalable=no">
+<script>
+	
+
+var modo_3d = false;
+var lados_planos = true;
+var estado_juego = "inicio";
+var rejilla_3d = false;
+var suelo_en_buffer = false;
+var limite_frames = false; // para ejecutar solo 2 segundos
+
+
+// modelo de datos del mundo
+var mundo = {
+	
+	musica :	
+	{
+		portada: "mus_musica2",
+		puntuacion: "mus_puntuacion1"
+	},
+	
+	nivel : {
+			plataformas: [0, 0, 0, 0, 0, 8, 0, 9, 0, 11, 0, 13, 0, 15, 0, 17, 0, 18, 0, 20, 0, 24, 24, 24, 0, 25, 0, 26, 0, 27, 0, 28, 28, 28, 28, 28, 28, 28, 0, 0 , 27, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 0, 0, 0, 0, 0, 0, 0, 6, 0, 7, 0, 7, 0, 8, 0, 9, 0, 10, 11, 11, 10, 10, 10, 10, 10, 10, 0, 0, 0, 0, 8, 8, 9, 9, 11, 11, 12, 12, 13, 13, 17, 0, 18, 0, 20, 0, 24, 24, 24, 0, 25, 0, 26, 0, 27, 0, 28, 28, 28, 28, 28, 28, 28, 0, 0 , 27, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 0, 0, 0, 0, 0, 0, 0, 6, 0, 7, 0, 7, 0, 8, 0, 9, 0, 10, 11, 11, 10, 10, 10, 10, 10, 0, 0, 0, 0, 0, 8, 0, 9, 0, 11, 0, 13, 0, 15, 0, 17, 0, 18, 0, 20, 0, 24, 24, 24, 0, 25, 0, 26, 0, 27, 0, 28, 28, 28, 28, 28, 28, 28, 0, 0 , 27, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 0, 0, 0, 0, 0, 0, 0, 6, 0, 7, 0, 7, 0, 8, 0, 9, 0, 10, 11, 11, 10, 10, 10, 10, 10, ],
+			suelo :      [6, 6, 6, 7, 8, 8, 7, 7, 6, 5, 4, 4, 4, 4, 0, 0, 0, 1, 1, 1, 2, 3.5, 4, 4.2, 4.3, 4.3, 4.3, 0, 20, 20, 20, 20, 20, 17, 14, 12.22, 12.21, 12.18, 11.14, 10, 8, 4, 3, 2, 1.7, 1.5, 1.28, 1.24, 1.22, 1.1, 0.9, .8, .84, .8, .81, .83, .88, .96, 1.2, 1.4, 1.3, 1.2, 1.1, 1, 0, 0, 0, 1, 1.04, 1.1, 2.1, 3, 4, 4, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 20, 21, 22, 23.2, 24, 24.2, 24, 23, 22, 20, 19, 16, 15, 14, 13, 12, 11.5, 11, 10.7, 9.2, 8, 9, 10, 12, 13.1, 14, 16, 18.2, 20, 21, 23, 25, 26, 28, 29, 31, 32, 30,30,  0, 0, 0, 2, 2, 2, 2, 3, 3, 4, 4, 5, 6,7, 7, 0, 0, 0, 4, 5, 6, 7, 8, 9, 9, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 10, 10, 10, 0, 0, 0, 4, 4, 4, 4, 4, 3, 3, 3, 2, 2, 2, 1, 1, 1, 2, 2, 2, 3, 3, 4, 4, 4, 5, 5, 5, 6, 7, 7, 8, 9],
+			monedas:     [0, 0, 0, 0, 0, 1, 2, 2, 1, 0, 0, 0, 1, 4, 4, 4, 0, 0, 6, 6, 6, 0, 0, 0, 0, 1, 1, 1, 1, 1, 6, 1, 1, 1, 2, 2, 1, 1, 2, 3, 2, 1, 1, 3, 3, 4, 4, 4, 3, 2, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 2, 2, 1, 0, 0, 0, 1, 4, 4, 4, 0, 0, 6, 6, 6, 0, 0, 0, 0, 1, 1, 1, 1, 1, 6, 1, 1, 1, 2, 2, 1, 1, 2, 3, 2, 1, 1, 3, 3, 4, 4, 4, 3, 2, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 2, 2, 1, 0, 0, 0, 1, 4, 4, 4, 0, 0, 6, 6, 6, 0, 0, 0, 0, 1, 1, 1, 1, 1, 6, 1, 1, 1, 2, 2, 1, 1, 2, 3, 2, 1, 1, 3, 3, 4, 4, 4, 3, 2, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 2, 2, 1, 0, 0, 0, 1, 4, 4, 4, 0, 0, 6, 6, 6, 0, 0, 0, 0, 1, 1, 1, 1, 1, 6, 1, 1, 1, 2, 2, 1, 1, 2, 3, 2, 1, 1, 3, 3, 4, 4, 4, 3, 2, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 2, 2, 1, 0, 0, 0, 1, 4, 4, 4, 0, 0, 6, 6, 6, 0, 0, 0, 0, 1, 1, 1, 1, 1, 6, 1, 1, 1, 2, 2, 1, 1, 2, 3, 2, 1, 1, 3, 3, 4, 4, 4, 3, 2, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 2, 2, 1, 0, 0, 0, 1, 4, 4, 4, 0, 0, 6, 6, 6, 0, 0, 0, 0, 1, 1, 1, 1, 1, 6, 1, 1, 1, 2, 2, 1, 1, 2, 3, 2, 1, 1, 3, 3, 4, 4, 4, 3, 2, 1, 1, 1, 1, 1],
+			pajaros :    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0,25, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0,0, 0, 0, 0, 0,0, 0, 0, 0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 28, 0, 0, 0, 0, 0, 0, 0, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0,25, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0,0, 0, 0, 0, 0,0, 0, 0, 0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 28, 0, 0, 0, 0, 0, 0, 0, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0,25, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0,0, 0, 0, 0, 0,0, 0, 0, 0, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 28, 0, 0, 0, 0, 0, 0, 0, 0, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0,],
+			tortugas:    [47, 54, 68, 132, 158],
+			flores:      [9, 122, 43, 59, 89, 99, 108, 131],
+			arbustos:	 [30, 53, 153],
+			arboles:     [10, 50, 100, 29, 45, 57, 67, 120, 135, 159],
+			chequeos:    [19, 23, 40, 52, 68, 90, 120, 136],
+			setas:		 [ 25, 175 ],
+			sol: {
+				right : 150,
+				top: 150,
+				radio: 30
+			},
+			lluvia: {
+				empieza: 5600,
+				termina: 9700
+			},
+			sprites: 
+			{	
+				suelo: {
+					ancho: 160,
+					alto: 160
+				},
+				hierba: {
+					ancho: 58,
+					alto: 66
+				}
+			},
+			gravedad: .45,
+			ancho_suelo: 50,
+			perspectiva: 1.6,
+			bloque : {
+				ancho: 58*2 / 2,
+				alto: 50 / 2
+			},
+			pendiente_actual : 1,
+			
+			enemigos : {
+				
+				pajaro : {
+					valor: 100,
+					velocidad : -2,
+					velocidad_huida: 6,
+					ancho: 60,
+					alto: 60,			
+					esperaFrames: 20,
+					animacion: {
+						"volando": ["pajaro1", "pajaro2", "pajaro3", "pajaro4"],
+						"huyendo": ["huyendo1", "huyendo2"]
+					},
+					sonidos: {
+						graznar: ["fx_pajaro1", "fx_pajaro2", "fx_pajaro3"],
+						huir: ["fx_huyendo1"]
+					}
+				},
+				
+				tortuga : {
+					velocidad : -.5,
+					ancho: 100,
+					alto: 59,			
+					esperaFrames: 14,
+					esperaFrames_asustado: 3,
+					animacion: {
+						normal: ["tortuga_normal1", "tortuga_normal2", "tortuga_normal3", "tortuga_normal4", "tortuga_normal5", "tortuga_normal6"],
+						asustada: ["tortuga_asustada1", "tortuga_asustada2", "tortuga_asustada3", "tortuga_asustada4", "tortuga_asustada5"],
+					},
+					sonidos: 
+					{
+						salto: "fx_salto_tortuga"
+					}
+				}
+				
+			},
+			
+			objetos : 
+			{
+				nube : {
+					probabilidad: .08,
+					velocidad : .1,			
+					esperaFrames: 0,  
+					sprite: ["nube1", "nube2", "nube3", "nube4"],
+				},
+				
+				moneda : {
+					ancho: 26,
+					alto: 26,
+					valor: 50,
+					probabilidad: .9,
+					altura: 7,
+					velocidad : 0,			
+					esperaFrames: 9,  
+					animacion: ["moneda1", "moneda2", "moneda3", "moneda4"],
+					sonidos: {
+						recolectar: "fx_moneda"
+					}				
+				},
+				
+				gota : {
+					probabilidad: .6,
+					altura: 150,
+					caida: -25,
+					ancho: 1,
+					alto: 20,
+					sprite: ["gota1"]					
+				},
+				
+				flor : {
+					sprite: ["flor1"]
+				},
+				
+				arbol: {
+					sprite: ["arbol1"]
+				},
+				
+				arbusto: {
+					sprite: ["arbusto1"]
+				},
+				
+				
+				seta: {
+					sprite: {
+						"normal": "seta1",
+						"rebotando": "seta1"
+					},
+					rebote: {
+						elasticidad: .5,    // es un valor de 0 a 1
+						impulso: 1.5, // es un valor multiplicador, puede ser mayor que 1 para agregar salto, o menor de 1
+					},
+					ancho: 100, 
+					alto:  90,
+					sonidos: {
+						rebote: {
+							entrada: "fx_rebote1",
+							salida: ["fx_rebote2", "fx_rebote3"]
+						}
+					}
+				}
+				
+				
+			},
+			
+			sonidos: {			
+				musica: "mus_musica1",
+				ambiente: "mus_ambiente1",
+				lluvia: "fx_lluvia",
+				pasos: ["fx_paso1", "fx_paso2", "fx_paso3", "fx_paso4", "fx_paso5", "fx_paso6", "fx_paso7"],
+				suelo: "fx_suelo",
+				plataforma: "fx_plataforma",
+			}
+		},
+		
+	
+	
+	camara :  {
+		alto: 500,
+		ancho: 700,
+		x: 0,
+		y: 0,
+		vx: 0,
+		vy: 0
+	},
+	
+	jugador: {
+		fps: 60,
+		espera_inicial: 50,  
+		caida: -10,		
+		ancho: 38*2,
+		alto: 58*2,
+		ancho_pie: 20,	
+		inmunidad: 120,
+		x0 : 50,   // 2540 // 3240
+		x: 0,
+		y: 1,
+		puntuacion: 0,
+		salto: 9,	
+		impulso_boton: .3,	
+		impulso_frames: 80, // número de frames en que se mantiene el impulso de salto con el botón pulsado
+		velocidad : 3.9,		
+		frame: 0,
+		frameContador: 0,
+		esperaFrames: 4,  // definir el tiempo de cambio de cada imagen
+		animaciones: {
+			parado: ["parado1"],
+			corriendo: ["corriendo1", "corriendo2", "corriendo3", "corriendo4", "corriendo5", "corriendo6", "corriendo7", "corriendo8", "corriendo9", "corriendo10"],
+			muerto: ["muerto1", "muerto2"],
+			saltando: ["saltando1"],
+			cayendo: ["cayendo1"],
+			rebotando: ["rebotando1"],
+		},
+		estado: "corriendo",
+		ajuste_plataforma: 30,
+		sonidos: {			
+			salto: ["fx_salto1"],
+			cayendo: ["fx_cayendo1", "fx_cayendo2"],
+			muerte: ["fx_muerte1", "fx_muerte2"]
+		}
+	},	
+
+};
+
+// programa principal
+
+
+
+var ctx, ctx2, ctx_suelo_detras, ctx_suelo_delante;
+
+document.addEventListener("DOMContentLoaded", carga);
+
+
+var cargando_total = 1;
+var cargando_completados = 0;
+var cargando_pendientes = [];
+function actualizar_carga()
+{
+	let carga = document.getElementById("carga");
+	carga.children[0].innerHTML = Math.floor(100 * cargando_completados / cargando_total) + "%";
+}
+
+function carga_completada()
+{
+	cargando_completados++;
+	actualizar_carga();
+	let idx = cargando_pendientes.indexOf(this.src);
+	cargando_pendientes.splice(idx, 1);
+	console.log(cargando_pendientes);
+	if(cargando_completados == cargando_total)
+	{
+		ir_a_pregunta();
+	}
+}
+
+
+function ir_a_pregunta()
+{
+	let carga = document.getElementById("carga");
+	let pregunta = document.getElementById("pregunta");
+	carga.style.display = "none";
+	pregunta.style.display = "flex";
+}
+
+function carga_error()
+{
+	console.log(this);
+	carga_completada();
+}
+
+function carga()
+{
+	let carga = document.getElementById("carga");
+	carga.addEventListener("click", function(){
+		document.location.reload();
+	});
+	let imagenes = document.getElementsByTagName("img");
+	let audios = document.getElementsByTagName("audio");
+	cargando_total = imagenes.length + audios.length;	
+	actualizar_carga();
+	for(var imagen of imagenes)
+	{
+		imagen.onload = carga_completada;
+		imagen.onerror = carga_error;
+		cargando_pendientes.push(imagen.src);
+	}
+	for(var audio of audios)
+	{
+		//audio.onload = carga_completada;
+		audio.addEventListener('canplaythrough', carga_completada, false);
+		audio.onerror = carga_error;
+		cargando_pendientes.push(audio.src);
+	}
+}
+
+
+function ir_a_portada()
+{	
+	let pregunta = document.getElementById("pregunta");
+	let boton_retornar = document.getElementById("boton_retornar");
+	let pantalla_final = document.getElementById("pantalla_final");
+	let portada = document.getElementById("portada");	
+	pregunta.style.display = "none";
+	boton_retornar.style.opacity = 0;
+	pantalla_final.style.display = "none";
+	portada.style.display = "flex";
+	reproducir_musica(mundo.musica.portada);	
+}
+
+var ya_inicializado = false;
+function inicializacion_canvas()
+{		
+	if(ya_inicializado)
+		return;
+	
+	ctx = iniciar_canvas("canvas_juego");
+	ctx2 = iniciar_canvas("stats");
+	//ctx_suelo_detras = iniciar_suelo("canvas_suelo_detras");
+	//ctx_suelo_delante = iniciar_suelo("canvas_suelo_delante");
+	
+	mundo.calculoFrames = 0;	// para pruebas
+	
+	ya_inicializado = true;
+}
+
+function iniciar_listeners()
+{
+	document.addEventListener("touchstart", boton);
+	document.addEventListener("touchend", suelta_boton);
+	document.addEventListener("touchleave", suelta_boton);
+	document.addEventListener("touchcancel", suelta_boton);	
+	
+	document.addEventListener("mousedown", boton);
+	document.addEventListener("mouseup", suelta_boton);
+	document.addEventListener("keydown", comprueba_teclado);
+	document.addEventListener("keyup", suelta_boton);
+}
+
+function finalizar_listeners()
+{
+	document.removeEventListener("touchstart", boton);
+	document.removeEventListener("touchend", suelta_boton);
+	document.removeEventListener("touchleave", suelta_boton);
+	document.removeEventListener("touchcancel", suelta_boton);	
+	
+	document.removeEventListener("mousedown", boton);
+	document.removeEventListener("mouseup", suelta_boton);
+	document.removeEventListener("keydown", comprueba_teclado);
+	document.removeEventListener("keyup", suelta_boton);
+}
+	
+
+function iniciar_canvas(id)
+{
+	let canvas = document.getElementById(id);	
+	
+	canvas.width = Math.max(window.innerWidth, window.innerHeight);
+	canvas.height = Math.min(window.innerWidth, window.innerHeight);
+	
+	mundo.camara.ancho = canvas.width;
+	mundo.camara.alto = canvas.height;	
+	
+	let ctx = canvas.getContext("2d");
+	ctx.imageSmoothingEnabled = false;
+	//ctx.translate(0.5, 0.5);
+	//ctx.translate(0, 0);
+	
+	return ctx;
+}
+
+function iniciar_suelo(id)
+{
+	let canvas = document.getElementById(id);
+	let altura = 0;
+	for(var i=0;i < mundo.nivel.suelo.length ; i++)
+		altura = Math.max(altura, mundo.nivel.suelo[i]);
+	
+	canvas.width = mundo.nivel.suelo.length * mundo.nivel.bloque.ancho;
+	canvas.height = (altura+5) * mundo.nivel.bloque.alto;
+	let ctx_suelo_detras = canvas.getContext("2d");
+	return ctx_suelo_detras;
+}
+
+
+function generar_enemigos() 
+{
+	let ancho = mundo.nivel.bloque.ancho; 
+	let alto = mundo.nivel.bloque.alto; 
+	
+	mundo.pajaros = []; 
+	for(var i in mundo.nivel.pajaros) 
+	{ 	
+		let altura = mundo.nivel.pajaros[i];
+		if(altura)
+		mundo.pajaros.push( 
+		{ 
+			estado: "volando",
+			vy: 0 ,
+			vx: mundo.nivel.enemigos.pajaro.velocidad, 
+			x: i * ancho, 
+			y: altura * alto, 
+			frame: 0, 
+			frameContador: 0, 
+		}); 
+	} 
+	
+	mundo.tortugas = []; 
+	for(var i of mundo.nivel.tortugas) 
+	{ 			
+		mundo.tortugas.push( 
+		{ 
+			ancho:  mundo.nivel.enemigos.tortuga.ancho,
+			alto:  mundo.nivel.enemigos.tortuga.alto,
+			velocidad: mundo.nivel.enemigos.tortuga.velocidad, 
+			estado: "normal",
+			x: i * ancho, 
+			y: 0, 
+			frame: 0, 
+			frameContador: 0, 
+		}); 
+	} 
+} 
+
+
+function generar_objetos() 
+{ 
+	let ancho = mundo.nivel.bloque.ancho; 
+	let alto = mundo.nivel.bloque.alto; 
+	let acumulador = 60.2; 	
+	let total_ancho_nivel = mundo.nivel.suelo.length * mundo.nivel.bloque.ancho;
+	
+	mundo.nubes = [];
+	for(var i = 0; i < total_ancho_nivel; i += 50)
+	{
+		if(Math.random() < acumulador)
+		{		
+			acumulador = 0;
+			let altura = Math.random() * mundo.camara.alto;
+			mundo.nubes.push(
+			{
+				velocidad: mundo.nivel.objetos.nube.velocidad,			
+				x: i - 500,
+				y: altura,
+				spriteNum: mundo.nubes.length % mundo.nivel.objetos.nube.sprite.length
+			});
+		}
+		
+		acumulador = acumulador + mundo.nivel.objetos.nube.probabilidad;
+	}
+	
+	// creamos las monedas
+	mundo.monedas = []; 
+	for(var i in mundo.nivel.monedas) 
+	{ 		
+		let altura = mundo.nivel.monedas[i];
+		if(altura)
+		{
+			let altura_suelo = mundo.nivel.suelo[i * 2];
+			if(altura_suelo)
+			mundo.monedas.push( 
+			{ 
+				velocidad: mundo.nivel.objetos.moneda,			
+				x: i * 2 * ancho,
+				y: (altura_suelo + altura + 1)  * alto,
+				frame: 0,
+				frameContador: 0,
+			});
+		}		
+	}
+	
+	
+	// creamos las flores
+	mundo.flores = []; 
+	for(var i of mundo.nivel.flores) 
+	{ 		
+		let altura_suelo = mundo.nivel.suelo[i];
+		mundo.flores.push( 
+			{ 
+				x: i * ancho,
+				y: altura_suelo * alto
+			});
+	}
+	
+	// creamos las setas
+	mundo.setas = []; 
+	for(var i of mundo.nivel.setas) 
+	{ 		
+		let altura_suelo = mundo.nivel.suelo[i];
+		mundo.setas.push( 
+			{ 
+				x: i * ancho,
+				y: altura_suelo * alto,
+				rebote: mundo.nivel.objetos.seta.rebote,
+				ancho: mundo.nivel.objetos.seta.ancho,
+				alto: mundo.nivel.objetos.seta.alto,
+			});
+	}
+	
+	// creamos los arboles
+	mundo.arboles = []; 
+	for(var i of mundo.nivel.arboles) 
+	{ 		
+		let altura_suelo = mundo.nivel.suelo[i];
+		mundo.arboles.push( 
+			{ 
+				x: i * ancho,
+				y: altura_suelo * alto
+			});
+	}
+	
+	// creamos los arbustos
+	mundo.arbustos = []; 
+	for(var i of mundo.nivel.arbustos) 
+	{ 		
+		let altura_suelo = mundo.nivel.suelo[i];
+		mundo.arbustos.push( 
+			{ 
+				x: i * ancho,
+				y: altura_suelo * alto
+			});
+	}
+	
+	
+	// creamos las gotas de lluvia
+	acumulador = 0; 
+	mundo.gotas = []; 	
+	for(var x = mundo.nivel.lluvia.empieza; x < mundo.nivel.lluvia.termina; x++) 
+	{ 
+		if(Math.random() < acumulador) 
+		{ 
+			acumulador = 0; 
+			let y = Math.random() * mundo.camara.alto * 10;
+			mundo.gotas.push( 
+			{ 
+				caida: mundo.nivel.objetos.gota.caida + Math.random()*5,
+				x: x,
+				y0: y,
+				y: y,				
+				cayendo: true
+			});
+		}
+		
+		acumulador = acumulador + mundo.nivel.objetos.gota.probabilidad;
+	}
+	
+}
+
+
+var imagen_hierba;
+var imagen_cesped;
+var patron_cesped;
+var imagen_suelo;
+var patron_suelo;
+
+
+
+function iniciar_nivel()
+{
+	generar_enemigos();
+	
+	generar_objetos();
+	
+	inicializacion_canvas();
+	
+	iniciar_listeners();
+
+	mundo.jugador.puntuacion = 0;
+	mundo.jugador.x0 = 0;
+	
+	colocar_jugador();
+	
+	bucle_principal();
+	
+	reproducir_musica(mundo.nivel.sonidos.musica);
+	
+	reproducir_ambiente(mundo.nivel.sonidos.ambiente);
+}
+
+function colocar_jugador()
+{
+	estado_juego = "empezando";
+	
+	mundo.jugador.velocidad_x = mundo.jugador.velocidad;
+	mundo.jugador.x = mundo.jugador.x0;
+	mundo.jugador.y = calcula_altura_terreno(mundo.jugador.x, 9000, true) + 270;
+	if(!mundo.jugador.y)
+		mundo.jugador.y = ctx.canvas.height + 50;
+	if(!mundo.jugador.y)
+		mundo.jugador.y = 1500;
+	mundo.jugador.caida = 0;
+	mundo.jugador.contador_inmunidad = mundo.jugador.inmunidad;
+	
+	mundo.camara.x = Math.max(0, mundo.jugador.x - mundo.camara.ancho / 2);
+	
+	jugador_nuevo_estado("cayendo", true);
+	
+	mundo.jugador.factorFPS = 60 / mundo.jugador.fps;
+}
+
+
+
+function bucle_principal(t)
+{	
+	
+	//if(mundo.jugador.x >=  410 && mundo.jugador.x <  440)
+		//boton();
+		
+	calcula_refresco(t);
+	
+	switch(estado_juego)
+	{
+		case "empezando":
+		case "jugando":
+		
+		
+		// calculamos la posición del jugador	
+		avanza_jugador();
+		
+		// calculamos la posición de la cámara
+		mueve_camara();	
+		
+		// calculamos la posición de las nubes
+		mueve_objetos();	
+		
+		// calculamos la posición de los enemigos
+		mueve_enemigos();
+		
+		//if(estado_juego == "jugando")
+		{
+			// detecta colisiones con enemigos u objetos
+			detecta_colisiones();		
+		}
+		
+		// desde aquí va todo el dibujado		
+				
+		// borramos lienzos (canvas)
+		borrar_canvas(ctx);
+		
+		// dibujamos las nubes
+		dibuja_nubes();//ctx_cielo);	
+		
+		// dibujamos las montañas y fondo
+		dibuja_fondo();
+		
+		// dibujamos los objetos de detrás
+		dibuja_objetos_detras(ctx);
+
+		// dibujamos el suelo del nivel	
+		if(modo_3d)	
+		{
+			if(suelo_en_buffer)
+				dibuja_suelo3d_detras(ctx_suelo_detras);		
+			else
+				dibuja_suelo3d_detras(ctx);		
+		}
+		else if(suelo_en_buffer)
+			dibuja_suelo2d(ctx_suelo_detras);
+		else
+			dibuja_suelo2d(ctx);
+		
+		
+		// dibujamos el suelo del nivel	
+		dibuja_plataformas(ctx);
+		
+		// después dibujaremos al jugador
+		dibuja_jugador(ctx);
+		
+		dibuja_objetos_delante(ctx);
+		
+		if(modo_3d)	
+		{
+			if(suelo_en_buffer)
+				dibuja_suelo3d_delante(ctx_suelo_delante);		
+			else
+				dibuja_suelo3d_delante(ctx);
+		}
+		
+		// dibuja los segmentos de la colisión
+		//dibuja_segmentos(ctx);			
+		
+		// dibujamos los enemigos
+		dibuja_enemigos(ctx);
+		
+		// efectos de luz
+		dibuja_luz(ctx);
+		
+		// puntuacion
+		dibuja_puntuacion(ctx);
+		
+		//dibuja estadísticas y otras informaciones
+		//estadisticas(ctx);
+		
+		mundo.calculoFrames++;
+		
+	}
+	
+	// pedimos el siguiente frame	
+	if(estado_juego == "empezando" || estado_juego == "jugando")
+		if(!limite_frames || mundo.calculoFrames < 60*2)
+			requestAnimationFrame(bucle_principal);
+}
+
+
+function calcula_altura_suelo(x)
+{
+	let ancho_bloque = mundo.nivel.bloque.ancho;
+	let alto_bloque = mundo.nivel.bloque.alto;	
+	let bloque_num = Math.floor(x / mundo.nivel.bloque.ancho);	
+	let altura1 = mundo.nivel.suelo[bloque_num];
+	let altura2 = mundo.nivel.suelo[bloque_num + 1];
+	let ratio = (x % ancho_bloque) / ancho_bloque;
+	
+	// calcula la altura del terreno según el bloque donde estemos ubicados y la pendiente
+	let altura_suelo =  altura1 * alto_bloque + ratio * (altura2 - altura1) * alto_bloque;	
+	if(altura1 == 0 || altura2 == 0 )
+		altura_suelo = 0;  // precipicio	
+	
+	//if(!altura_suelo || y < altura_suelo) 
+		//return 0;
+	return altura_suelo;
+}
+
+
+function calcula_altura_plataforma(x, y)
+{
+	let ancho_bloque = mundo.nivel.bloque.ancho;
+	let alto_bloque = mundo.nivel.bloque.alto;	
+	let bloque_num = Math.floor(x / mundo.nivel.bloque.ancho);	
+	let altura_plataforma = mundo.nivel.plataformas[bloque_num] * alto_bloque;
+	//if(!altura_plataforma || y < altura_plataforma) 
+		//return 0;
+	return altura_plataforma;
+}
+
+
+function calcula_altura_final(y, en_suelo, altura_suelo, altura_plataforma)
+{
+	let calculo = {
+		altura: altura_suelo,
+		del_suelo: true
+	};
+	let altura_devuelta = altura_suelo;
+	let encima_del_suelo = en_suelo || y >= altura_suelo;
+	if(!en_suelo && altura_plataforma != 0)
+	{		
+		if((altura_plataforma > altura_suelo && y + mundo.jugador.ajuste_plataforma >= altura_plataforma) 
+			|| 
+			(altura_plataforma < altura_suelo && !encima_del_suelo)
+			)
+		{				
+			calculo.altura = altura_plataforma;
+			calculo.del_suelo = false;
+			//mundo.nivel.theta = 0;
+		}
+	}
+	return calculo;
+}
+
+function calcula_altura_terreno(x, y, en_suelo)
+{
+	let ancho_bloque = mundo.nivel.bloque.ancho;
+	let alto_bloque = mundo.nivel.bloque.alto;	
+	let bloque_num = Math.floor(x / mundo.nivel.bloque.ancho);	
+	let altura0 = mundo.nivel.suelo[bloque_num - 1] ;
+	if(!altura0) altura0 = 1;
+	let altura1 = mundo.nivel.suelo[bloque_num];
+	let altura2 = mundo.nivel.suelo[bloque_num + 1];
+	let ratio = (x % ancho_bloque) / ancho_bloque;
+	
+	// calcula la altura del terreno según el bloque donde estemos ubicados y la pendiente
+	let altura_suelo =  altura1 * alto_bloque + ratio * (altura2 - altura1) * alto_bloque;	
+	if(altura1 == 0 || altura2 == 0 )
+		altura_suelo = 0;  // precipicio
+	
+	let encima_del_suelo = en_suelo || y >= altura_suelo;
+	
+	// comprobamos si estamos encima de una plataforma
+	let altura_devuelta = altura_suelo;
+	let altura_plataforma = mundo.nivel.plataformas[bloque_num] * alto_bloque;
+	
+	if(!en_suelo && altura_plataforma != 0)
+	{		
+		if((altura_plataforma > altura_suelo && y >= altura_plataforma) 
+			|| 
+			(altura_plataforma < altura_suelo && !encima_del_suelo)
+			)
+		{				
+			altura_devuelta = altura_plataforma;
+		}
+	}
+	
+	return altura_devuelta;
+}
+
+
+
+
+
+
+function intersecta_con_terreno(vector)
+{
+	let x = vector.x1;
+	let ancho_bloque = mundo.nivel.bloque.ancho;
+	let alto_bloque = mundo.nivel.bloque.alto;	
+	let bloque_num = Math.floor(x / mundo.nivel.bloque.ancho);	
+	let altura1 = mundo.nivel.suelo[bloque_num];
+	let altura2 = mundo.nivel.suelo[bloque_num + 1];
+	let resultado = {};	
+	if(altura1 && altura2)
+	{
+		resultado.segmento_suelo = {
+					x1: bloque_num * ancho_bloque,
+					y1: altura1 * alto_bloque,
+					x2: (bloque_num + 1) * ancho_bloque,
+					y2: altura2 * alto_bloque
+		};
+		resultado.suelo = segmentos_intersectan(vector, resultado.segmento_suelo);
+	}
+	
+	let altura_plataforma = mundo.nivel.plataformas[bloque_num] * alto_bloque;
+	if(altura_plataforma > 0)
+	{
+		resultado.segmento_plataforma = {
+					x1: bloque_num * ancho_bloque,
+					y1: altura_plataforma,
+					x2: (bloque_num + 1) * ancho_bloque,
+					y2: altura_plataforma
+		};		
+		resultado.plataforma = segmentos_intersectan(vector, resultado.segmento_plataforma);			
+	}
+	resultado.vector = vector;
+	resultado.intersecta = resultado.suelo || resultado.plataforma;
+	return resultado;
+}
+
+
+function intersecta_con_tortuga( vector, tortuga )
+{
+	let x = vector.x1;
+	let resultado = {};	
+	resultado.segmento_enemigo = {
+		x1: tortuga.x - tortuga.ancho / 2,
+		y1: tortuga.y + tortuga.alto / 2,
+		x2: tortuga.x + tortuga.ancho / 2,
+		y2: tortuga.y + tortuga.alto / 2
+	};
+	if(tortuga.estado=="asustada")
+	{
+		resultado.segmento_enemigo.y1 = tortuga.y + tortuga.alto / 4;
+		resultado.segmento_enemigo.y2 = resultado.segmento_enemigo.y1;
+	}
+	
+	resultado.enemigo = segmentos_intersectan(vector, resultado.segmento_enemigo);			
+	resultado.vector = vector;
+	resultado.intersecta = resultado.enemigo;
+	return resultado;
+}
+
+
+function intersecta_con_seta( vector, seta )
+{
+	if(seta.rebotando)
+		return null;
+	let x = vector.x1;
+	let resultado = {};	
+	resultado.segmento_objeto = {
+		x1: seta.x - seta.ancho / 2,
+		y1: seta.y + seta.alto,
+		x2: seta.x + seta.ancho / 2,
+		y2: seta.y + seta.alto
+	};
+	
+	resultado.objeto = segmentos_intersectan(vector, resultado.segmento_objeto);			
+	resultado.vector = vector;
+	resultado.intersecta = resultado.objeto;
+	return resultado;
+}
+
+
+function segmentos_intersectan ( segmento_elemento, segmento_terreno )
+{
+	if( !segmento_terreno.y1 || !segmento_terreno.y2 )
+		return false;
+		
+	return segmentos_intersectan_2(
+		segmento_elemento.x1, segmento_elemento.y1, segmento_elemento.x2, segmento_elemento.y2,
+		segmento_terreno.x1, segmento_terreno.y1, segmento_terreno.x2, segmento_terreno.y2 
+	);
+}
+
+function segmentos_intersectan_2(x0, y0, x1, y1, x2, y2, x3, y3)
+{
+	// point object: {x:, y:}
+	// p0 & p1 form one segment, p2 & p3 form the second segment
+	
+	var p0 = {x: x0, y: y0};
+	var p1 = {x: x1, y: y1};
+	var p2 = {x: x2, y: y2};
+	var p3 = {x: x3, y: y3};
+	
+	// Returns true if lines segments are intercepting	
+	var v1, v2, v3, cross, u1, u2; // working variable are closed over so they do not need creation
+	
+	v1 = {x : null, y : null}; // line p0, p1 as vector
+	v2 = {x : null, y : null}; // line p2, p3 as vector
+	v3 = {x : null, y : null}; // the line from p0 to p2 as vector
+
+	v1.x = p1.x - p0.x; // line p0, p1 as vector
+	v1.y = p1.y - p0.y;
+	v2.x = p3.x - p2.x; // line p2, p3 as vector
+	v2.y = p3.y - p2.y;
+	
+	if((cross = v1.x * v2.y - v1.y * v2.x) === 0){ // cross prod 0 if lines parallel
+		return false; // no intercept
+	}
+	
+	v3 = {x : p0.x - p2.x, y : p0.y - p2.y}; // the line from p0 to p2 as vector
+	
+	u2 = (v1.x * v3.y - v1.y * v3.x) / cross; // get unit distance along line p2 p3
+	
+	// code point B
+	if (u2 >= 0 && u2 <= 1) { // is intercept on line p2, p3
+		u1 = (v2.x * v3.y - v2.y * v3.x) / cross; // get unit distance on line p0, p1;
+		// code point A
+		//return (u1 >= 0 && u1 <= 1); // return true if on line else false.
+		if(u1 >= 0 && u1 <= 1)
+			return { 
+				x : p0.x + v1.x * u1,
+				y : p0.y + v1.y * u1,
+			};
+		// code point A end
+	}
+	return false; // no intercept;
+	// code point B end
+}
+
+
+
+function avanza_jugador()
+{
+	var jugador = mundo.jugador;
+	// avanza hacia adelante
+	if(jugador.velocidad_x && !["muerto", "parado", "rebotando"].includes(jugador.estado))
+	{		
+		if(delta)			
+			jugador.x += jugador.velocidad_x * jugador.factorFPS; // * delta/(1000/60);
+		//console.log("za jugador x="+jugador.x);
+			
+		if(jugador.avanza_seguro > 0)
+			jugador.avanza_seguro -= jugador.velocidad_x * 1;
+		
+		
+		// control de puntos de chequeo
+		for(var chequeo of mundo.nivel.chequeos)
+		{
+			if(jugador.x >= chequeo * mundo.nivel.bloque.ancho)
+			{
+				jugador.x0 = chequeo * mundo.nivel.bloque.ancho;
+			}
+		}
+		
+		
+		let total_ancho_nivel = mundo.nivel.suelo.length * mundo.nivel.bloque.ancho;
+		
+		if(mundo.jugador.x > total_ancho_nivel)
+		{		
+			finalizar_juego();
+			return;
+		}		
+		
+		if(!suena_lluvia && mundo.jugador.x > mundo.nivel.lluvia.empieza - 400 && mundo.jugador.x < mundo.nivel.lluvia.termina + 400)
+		{
+			reproducir_sonido(mundo.nivel.sonidos.lluvia);
+			suena_lluvia = true;
+		}
+		else if(suena_lluvia && (mundo.jugador.x < mundo.nivel.lluvia.empieza - 400 || mundo.jugador.x > mundo.nivel.lluvia.termina + 400))
+		{
+			pausa_sonido(mundo.nivel.sonidos.lluvia);
+			suena_lluvia = false;
+		}
+	}
+	
+	// inmunidad
+	if(jugador.estado != "muerto")
+	{
+		if(jugador.contador_inmunidad > 0)
+			jugador.contador_inmunidad -= 1 * jugador.factorFPS;
+	}
+
+	//calculamos la posición del jugador actual y siguiente (en los pies)
+	let x_actual = jugador.x;
+	let y_actual = jugador.y - jugador.alto / 2;
+	let x_siguiente = x_actual + jugador.velocidad_x * jugador.factorFPS;
+	let y_siguiente = y_actual + jugador.caida * jugador.factorFPS;
+	
+	
+	// calculamos aquí los vectores de movimiento o de colisión
+	jugador.vectores = []; 		
+	jugador.vectores[0] = {
+		x1 : x_actual - jugador.ancho_pie,
+		y1 : y_actual,
+		x2 : x_siguiente - jugador.ancho_pie,
+		y2 : y_siguiente
+	};
+	
+	jugador.vectores[1] = {
+		x1 : x_actual + jugador.ancho_pie,
+		y1 : y_actual,
+		x2 : x_siguiente + jugador.ancho_pie,
+		y2 : y_siguiente
+	};
+	
+	/*jugador.vectores[2] = {
+		x1 : x_actual - jugador.ancho_pie / 2,
+		y1 : y_actual,
+		x2 : x_siguiente - jugador.ancho_pie / 2,
+		y2 : y_siguiente
+	};
+	
+	jugador.vectores[3] = {
+		x1 : x_actual + jugador.ancho_pie / 2,
+		y1 : y_actual,
+		x2 : x_siguiente + jugador.ancho_pie / 2,
+		y2 : y_siguiente
+	};*/
+	
+	jugador.vectores[2] = {
+		x1 : x_actual,
+		y1 : y_actual,
+		x2 : x_siguiente,
+		y2 : y_siguiente
+	};
+	
+	jugador.vectores[3] =  {
+		x1 : jugador.vectores[0].x2,
+		y1 : jugador.vectores[0].y2,
+		x2 : jugador.vectores[1].x2,
+		y2 : jugador.vectores[1].y2
+	};
+	
+	jugador.intersecciones = [];
+	
+	// control según estado del jugador
+	
+	switch(jugador.estado)
+	{
+	
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 		MUERTO
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		case "muerto":
+		jugador.y += jugador.caida * jugador.factorFPS;
+		jugador.caida -= mundo.nivel.gravedad * jugador.factorFPS;
+		
+		if(jugador.y < -200)
+			colocar_jugador();
+		break;
+		
+		
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 		PARADO
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		
+		case "parado":
+		
+		jugador.contador_inicial -= jugador.factorFPS;
+		if(jugador.contador_inicial < 0)
+		{
+			jugador_nuevo_estado("corriendo");	
+			jugador.velocidad_x = 0;
+		}
+		
+		break;
+	
+	
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 		CORRIENDO
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	
+		case "corriendo":		
+		
+		let altura_suelo1   = calcula_altura_suelo(jugador.vectores[0].x1);
+		let altura_suelo2   = calcula_altura_suelo(jugador.vectores[1].x1);
+		let altura_suelo5   = calcula_altura_suelo(jugador.vectores[3].x1);
+		let altura_suelo    = Math.max(altura_suelo1, altura_suelo2, altura_suelo5);
+		
+		let altura_plataforma1 = calcula_altura_plataforma(jugador.vectores[0].x1);
+		let altura_plataforma2 = calcula_altura_plataforma(jugador.vectores[0].x1);
+		let altura_plataforma = altura_plataforma1;
+		if(altura_plataforma2 > altura_plataforma1)
+		{	
+			let dyp2 = altura_plataforma2 - (jugador.y - jugador.alto / 2);
+			if(    
+				altura_plataforma2 <= altura_plataforma1 + jugador.ajuste_plataforma ||
+				(dyp2 > - jugador.ajuste_plataforma && dyp2 < jugador.ajuste_plataforma)
+			)			
+			altura_plataforma = altura_plataforma2;
+		}
+		
+		let factor = jugador.ancho_pie / ( jugador.ancho / 2);
+		let dys = altura_suelo - (jugador.y - jugador.alto / 2) ;
+		let dyp = altura_plataforma - (jugador.y - jugador.alto / 2) ;
+		
+		jugador.velocidad_x = jugador.velocidad;
+		
+		if(jugador.en_suelo) // si está en el suelo
+		{
+			if(altura_suelo > 0)
+			{
+				if( dys < -50 * factor ) {
+					jugador.en_suelo = false;					
+					jugador_nuevo_estado("cayendo");
+					break;
+				}
+			}
+			else
+			{
+				if( dys < 0 ) {
+					jugador.en_suelo = false;
+					if( altura_plataforma > 0 && dyp > - jugador.ajuste_plataforma && dyp < jugador.ajuste_plataforma) 
+					{
+						// pasamos a una plataforma
+						;
+					}
+					else
+						jugador_nuevo_estado("cayendo");
+					break;
+				}
+			}
+		}
+		else // si está en una plataforma
+		{
+			if( dyp < - jugador.ajuste_plataforma || dyp > jugador.ajuste_plataforma ) 
+			{
+				if( altura_suelo > 0 && dys > - jugador.ajuste_plataforma && dys < jugador.ajuste_plataforma) 
+				{
+					// pasamos al suelo
+					jugador.en_suelo = true;
+				}
+				else
+				{
+					jugador.en_suelo = false;
+					jugador_nuevo_estado("cayendo");
+				}
+				break;
+			}
+		}
+			
+		
+		// la velocidad en el eje X del jugador depende del ángulo de la pendiente
+		/*if(false && mundo.nivel.theta>0.3)
+			jugador.velocidad_x = jugador.velocidad * Math.cos(mundo.nivel.pendiente_actual);
+		else*/			
+		
+		if(jugador.estado == "corriendo" || jugador.estado == "parado")
+		{
+			let altura_final = calcula_altura_final(jugador.y - jugador.alto / 2, jugador.en_suelo, altura_suelo, altura_plataforma);
+			jugador.y = altura_final .altura + jugador.alto / 2;
+		}
+		
+		break;
+		
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 		SALTANDO / CAYENDO
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+		case "cayendo":
+		case "saltando":
+		
+		if(jugador.salto_inicial > 0)
+		{
+			jugador.salto_inicial -= jugador.salto;
+		}
+		else 
+		{
+			for(var i=0; i < jugador.vectores.length;i++)
+				jugador.intersecciones[i] = {intersecta: false};
+			
+			
+			if(jugador.caida < 1)
+			{		
+				for(var i=0;i < jugador.vectores.length;i++)
+					jugador.intersecciones[i] = intersecta_con_terreno(jugador.vectores[i]);
+			}	
+			
+			if(jugador.caida < 2)
+				jugador.intersecciones[3] = intersecta_con_terreno(jugador.vectores[3]);
+			
+			let comprobar_intersecta = null;
+			for(var i=0;i < jugador.vectores.length;i++)
+				if(jugador.intersecciones[i].intersecta)
+				{
+					comprobar_intersecta = jugador.intersecciones[i];
+					break;
+				}
+			
+			if(comprobar_intersecta)
+			{	
+				let resultado = comprobar_intersecta;
+				
+				let punto_de_impacto = resultado.suelo || resultado.plataforma;
+				if(punto_de_impacto)
+				{
+					jugador.y = punto_de_impacto.y + jugador.alto / 2;
+					jugador.caida = 0;
+				}
+				
+				if(estado_juego == "empezando")
+				{
+					estado_juego = "jugando";
+					jugador_nuevo_estado("parado");	
+					jugador.contador_inicial = jugador.espera_inicial;
+					jugador.en_suelo = resultado.suelo;
+				}
+				else
+				{
+					jugador_nuevo_estado("corriendo");	
+					jugador.en_suelo = resultado.suelo;
+				}
+				
+				
+				if(resultado.suelo)
+					reproducir_sonido(mundo.nivel.sonidos.suelo);
+				else
+					reproducir_sonido(mundo.nivel.sonidos.plataforma);
+				
+				break;
+			}
+		}
+		
+		
+		// cambia la Y segun cae ó salta
+		jugador.y += jugador.caida * jugador.factorFPS; 	
+		
+		// gestión del impulso sostenido de salto
+		if(jugador.contador_impulso -- > 0 && boton_pulsado)
+			jugador.caida += jugador.impulso_boton * jugador.contador_impulso / jugador.impulso_frames;
+		
+		// la gravedad hace su trabajo de aceleración
+		jugador.caida -= mundo.nivel.gravedad * jugador.factorFPS;
+		
+		if(jugador.y < -600)
+			jugador_muere();				
+		
+		break;
+
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 		REBOTANDO
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	case "rebotando":
+	
+		let objeto = jugador.rebotando_en;
+		let dy = objeto.y + objeto.alto -(jugador.y - jugador.alto / 2);
+		let ratio = dy / (objeto.alto * objeto.rebote.elasticidad);
+		
+		objeto.dy = dy;
+		
+		
+		if(jugador.caida < 0)
+		{			
+			// la caida se reduce en proporción inversa a la elasticidad
+			let reductor = .1 / ( objeto.rebote.elasticidad + .0001 );
+			
+			jugador.caida -= mundo.nivel.gravedad / 10;
+			
+			jugador.caida /= 1 + ratio * reductor;
+
+			objeto.tension += dy/100;
+			// no podemos caer más allá del objeto en las Y
+			
+			jugador.caida = Math.max( -1 * (objeto.alto - dy), jugador.caida );
+			
+			jugador.rebote_frames ++;			
+			
+				
+			// adelantamos el jugador un poco
+			jugador.x += (-jugador.caida / 10) * jugador.velocidad_x  * jugador.factorFPS; // * delta/(1000/60);
+			
+			
+			var limite_tension = objeto.tension > objeto.rebote.elasticidad * 50;
+			if(limite_tension)
+				console.log("limite tension");
+			
+			let llego_al_fondo = ratio > 0.98;
+			if(llego_al_fondo)
+				console.log("llego_al_fondo");
+			
+			let ya_no_cae = jugador.caida >= -0.01;
+			if(ya_no_cae)
+				console.log("ya_no_cae");
+			
+			
+			// llega al límite y rebota
+			if(llego_al_fondo ||  ya_no_cae || limite_tension)	
+			{				
+				jugador.rebote_contador = jugador.rebote_frames;
+				jugador.caida = 0;
+				jugador.rebote_dy = dy;
+			}
+		}
+		else if(jugador.rebote_contador > 0)
+		{
+			let fy = jugador.rebote_contador / jugador.rebote_frames;			
+			
+			jugador.rebote_contador-= objeto.rebote.impulso;
+			
+			jugador.y = objeto.y + (objeto.alto - jugador.rebote_dy) + (1-fy) * jugador.rebote_dy + jugador.alto / 2;
+			
+			jugador.x += (1 - fy) * jugador.velocidad_x * jugador.factorFPS; // * delta/(1000/60);
+		}
+			
+		
+		// cambia la Y segun entra ó sale del rebote
+		jugador.y += jugador.caida * jugador.factorFPS;
+		
+		//objeto.rebotando / objeto.rebote
+		if(jugador.rebote_contador <= 0 || dy < 0 /*!jugador.rebote*/)
+		{		
+			objeto.rebotando = false;
+			jugador.caida = jugador.rebote_salida;
+			//jugador_saltar(true, true); 
+			jugador.contador_impulso = jugador.impulso_frames;	
+			jugador_nuevo_estado("saltando");
+			jugador.en_suelo = false;
+			reproducir_sonido(mundo.jugador.sonidos.salto);
+			if(jugador.rebote_salida > mundo.jugador.salto)
+				reproducir_sonido_aleatorio(mundo.nivel.objetos.seta.sonidos.rebote.salida);
+		}
+		else 
+		{
+			objeto.dy = objeto.y + objeto.alto -(jugador.y - jugador.alto / 2);
+		}
+	}
+	
+}
+
+
+function jugador_muere()
+{
+	jugador_nuevo_estado("muerto");
+	reproducir_sonido_aleatorio(mundo.jugador.sonidos.muerte);
+}
+
+
+
+
+
+
+
+function mueve_enemigos()
+{
+	for(var pajaro of mundo.pajaros)
+	{
+		//if(pajaro.x < mundo.camara.x - mundo.camara.ancho || pajaro.x > mundo.camara.x + mundo.camara.ancho)
+			//continue;
+		
+		pajaro.x += pajaro.vx;
+		pajaro.y += pajaro.vy;
+	}
+	
+	for(var tortuga of mundo.tortugas)
+	{
+		// si la tortuga llega a un precipicio da la vuelta
+		if(calcula_altura_terreno(tortuga.x + tortuga.velocidad, tortuga.y, tortuga.en_suelo) == 0)
+		{
+				tortuga.velocidad = -tortuga.velocidad;
+		}
+		
+		if(tortuga.estado == "normal")
+		{
+			tortuga.x = tortuga.x + tortuga.velocidad;
+			tortuga.y = calcula_altura_terreno(tortuga.x, tortuga.y, tortuga.en_suelo) + mundo.nivel.enemigos.tortuga.alto / 2;
+		}
+	}
+}
+
+
+function mueve_objetos()
+{
+	for(var nube of mundo.nubes)
+	{
+		nube.x += mundo.nivel.objetos.nube.velocidad;
+	}
+	
+	for(var gota of mundo.gotas)
+	{	
+		if(gota.x < mundo.camara.x - mundo.camara.ancho || gota.x > mundo.camara.x + mundo.camara.ancho)
+			continue;
+			
+		if(gota.cayendo)
+		{
+			let h = calcula_altura_terreno(gota.x, gota.y);
+			if(h == 0) 							
+				h = -500;			
+			gota.y += gota.caida;
+			if( gota.y < h ) 
+			{
+				gota.cayendo = false;
+				gota.reposando = Math.random() * 500;
+				//if(Math.abs(gota.x - mundo.jugador.x) < 140)	
+					//reproducir_sonido_aleatorio(mundo.nivel.objetos.gota.sonidos);
+			}
+		}	
+		else
+		{
+			gota.reposando--;
+			if(gota.reposando < 0)
+			{
+				gota.y = gota.y0;
+				gota.cayendo = true; // reinicia el ciclo
+			}
+		}
+	}	
+}
+
+
+function detecta_colisiones()
+{
+	if(mundo.jugador.estado == "muerto")
+		return;
+		
+	//if(mundo.jugador.y <= - mundo.jugador.alto / 2)
+		//jugador_muere();
+
+
+	// enemigos que no nos pueden matar aquí:
+	
+	// enemigos
+	let jugador = mundo.jugador;
+	for(var pajaro of mundo.pajaros)
+	{
+		if(pajaro.estado == "huyendo")
+			continue;
+				
+		let dx = Math.abs(pajaro.x - jugador.x);
+		let dy = Math.abs(pajaro.y - jugador.y);
+		
+		if(dx < jugador.ancho / 2 + 3 * mundo.nivel.enemigos.pajaro.ancho / 2 &&
+		   dy < jugador.alto / 2 + 3 * mundo.nivel.enemigos.pajaro.alto / 2)
+		   {			
+			//jugador_nuevo_estado("muerto");
+			//mundo.jugador.caida = mundo.jugador.salto / 1.4;
+			aumenta_puntuacion(mundo.nivel.enemigos.pajaro.valor);
+			pajaro.estado = "huyendo";
+			pajaro.frame = 0;
+			pajaro.frameContador = 0;
+			let velocidad = mundo.nivel.enemigos.pajaro.velocidad_huida;
+			if(jugador.x > pajaro.x)
+				pajaro.vx = - velocidad / 1.5;
+			else
+				pajaro.vx = velocidad / 1.5;			
+			pajaro.vx += Math.random()*6 - 3;
+			pajaro.vy = velocidad;
+			reproducir_sonido(mundo.nivel.enemigos.pajaro.sonidos.huir);
+		   }
+	}
+	
+	// monedas
+	for(var moneda of mundo.monedas)
+	{
+		if( moneda.recogida) continue;
+	
+		let dx = Math.abs(moneda.x - jugador.x);
+		let dy = Math.abs(moneda.y - jugador.y);
+		
+		if(dx < jugador.ancho / 2 + 0.5 * mundo.nivel.objetos.moneda.ancho / 2 &&
+		   dy < jugador.alto / 2 + 0.5 * mundo.nivel.objetos.moneda.alto / 2)
+		   {			
+			  moneda.recogida = true;			  
+			  aumenta_puntuacion(mundo.nivel.objetos.moneda.valor);
+		   }
+	}	
+
+
+	// setas	
+	for(var seta of mundo.setas)
+	{
+		let dx = Math.abs(seta.x - jugador.x) / 2;
+		let dy = Math.abs(seta.y - jugador.y + mundo.nivel.objetos.seta.alto / 2);
+		
+		if(seta.rebotando)
+		{
+			if(mundo.jugador.estado != "rebotando")
+			{
+				seta.dy /= 2;
+				if(seta.dy < .05)
+					seta.rebotando = false;
+			}
+		}
+		else if( ["cayendo", "saltando", "parado"].includes(mundo.jugador.estado) && mundo.jugador.caida < 0 &&
+			/*!seta.rebotando &&*/
+			dx < jugador.ancho / 2 + mundo.nivel.objetos.seta.ancho / 2)
+		   {		
+				var i = mundo.jugador.intersecciones.length;
+				mundo.jugador.intersecciones[i]   = intersecta_con_seta(mundo.jugador.vectores[0], seta);
+				mundo.jugador.intersecciones[i+1] = intersecta_con_seta(mundo.jugador.vectores[1], seta);				
+				let comprobar_intersecta = mundo.jugador.intersecciones[i].intersecta || mundo.jugador.intersecciones[i+1].intersecta;
+				if(comprobar_intersecta)
+				{
+				  jugador_nuevo_estado("rebotando");
+				  mundo.jugador.rebotando_en = seta;
+				  mundo.jugador.rebote = 0;
+				  mundo.jugador.rebote_frames = 0;
+				  mundo.jugador.rebote_contador = 1;
+				  mundo.jugador.rebote_salida = Math.min(mundo.jugador.salto*2.1, - mundo.jugador.caida * seta.rebote.impulso);
+				  seta.rebotando = true;
+				  seta.tension = 0;
+				  //jugador_saltar(true, true);
+				  reproducir_sonido(mundo.nivel.objetos.seta.sonidos.rebote.entrada);
+				}
+		   }
+	}	
+
+
+
+	//
+	if(mundo.jugador.contador_inmunidad > 0)
+		return;
+
+	
+	for(var tortuga of mundo.tortugas)
+	{
+		let dx = Math.abs(tortuga.x - jugador.x);
+		let dy = Math.abs(tortuga.y - jugador.y);
+		
+		let altura_contacto = mundo.nivel.enemigos.tortuga.alto / 2;
+		if(tortuga.estado == "asustada")
+			altura_contacto = mundo.nivel.enemigos.tortuga.alto / 3;
+			
+		if( dx < 500 /*jugador.ancho / 2 + mundo.nivel.enemigos.tortuga.ancho / 2  */ )
+		{
+			if( ["cayendo", "saltando"].includes(mundo.jugador.estado) && jugador.y > tortuga.y )
+			{
+				var i = mundo.jugador.intersecciones.length;
+				mundo.jugador.intersecciones[i] = intersecta_con_tortuga(mundo.jugador.vectores[0], tortuga);
+				mundo.jugador.intersecciones[i+1] = intersecta_con_tortuga(mundo.jugador.vectores[1], tortuga);				
+				let comprobar_intersecta = mundo.jugador.intersecciones[i].intersecta || mundo.jugador.intersecciones[i+1].intersecta;
+				if(comprobar_intersecta)
+				{
+					jugador_saltar(true);
+					reproducir_sonido(mundo.nivel.enemigos.tortuga.sonidos.salto);
+					if(tortuga.estado=="normal")
+					{
+						tortuga.estado = "asustada";
+						tortuga.frame = 0;
+						tortuga.frameContador = 0;
+					}
+				}
+			}
+		
+			if( dx < jugador.ancho / 2 + 0.8 * mundo.nivel.enemigos.tortuga.ancho / 2 &&
+			    dy < jugador.alto / 2 + 0.9 * altura_contacto )
+		    {
+			   if( jugador.y - jugador.alto / 2 >= tortuga.y + tortuga.alto / 4 )
+			   {
+				   jugador_saltar(true);					   
+				   if(tortuga.estado=="normal")
+				   {
+					reproducir_sonido(mundo.nivel.enemigos.tortuga.sonidos.salto);
+						tortuga.estado = "asustada";
+						tortuga.frame = 0;
+						tortuga.frameContador = 0;				   
+				   }
+			   }
+			   else
+			   if(tortuga.estado=="normal")
+			   {
+					jugador_muere();
+					mundo.jugador.caida = mundo.jugador.salto / 1.4;
+			   }
+		   }
+		}
+	}	
+}
+
+
+
+function mueve_camara()
+{
+	// la cámara busca al jugador	
+	let objetivo_x = mundo.jugador.x;
+	let objetivo_y = mundo.jugador.y;
+	let total_ancho_nivel = mundo.nivel.suelo.length * mundo.nivel.bloque.ancho;
+	if(estado_juego == "empezando" && mundo.jugador.estado != "saltando")
+		objetivo_y = calcula_altura_terreno(mundo.jugador.x, mundo.jugador.y);		
+	if(isNaN(objetivo_y))
+		objetivo_y =  mundo.jugador.y;
+	if(isNaN(objetivo_y))
+		objetivo_y =  300;
+		
+	let dx = Math.min(total_ancho_nivel - mundo.camara.ancho, objetivo_x) - (mundo.camara.x + mundo.camara.ancho / 12);
+	let dy = Math.max(0, objetivo_y) - (mundo.camara.y + mundo.camara.alto / 4);
+	
+	
+	//console.log("dx = "+dx+" dy="+dy);
+	//console.log(Math.floor(mundo.camara.y) + "  dy = "+dy+" objetivo_y="+objetivo_y);	
+	
+	
+	//let nueva_vx = 0;
+	let multiplicador = 1;	
+	let jugador_demasiado_bajo = objetivo_y - mundo.jugador.alto / 2 - mundo.camara.y < 90;
+	let jugador_demasiado_alto = objetivo_y + mundo.jugador.alto / 2 - mundo.camara.y > mundo.camara.alto;
+	let jugador_fuera_de_camara = jugador_demasiado_bajo || jugador_demasiado_alto;
+	//console.log("dmb = "+jugador_demasiado_bajo+"   dma="+jugador_demasiado_alto);
+	if(Math.abs(dx) > 40 || Math.abs(dy) > 40 || jugador_fuera_de_camara)
+	{
+		if(Math.abs(dy) > 340 || jugador_fuera_de_camara) 
+			multiplicador = 6;
+		
+		//console.log("dx="+dx + "dy="+dy);
+		let velocidad_busqueda_x = Math.abs(dx) / 80;
+		let velocidad_busqueda_y = Math.abs(dy) / 200;
+		mundo.camara.vx = Math.max(-1 * velocidad_busqueda_x, Math.min(1 * velocidad_busqueda_x, dx));		
+		mundo.camara.vy = multiplicador * Math.max(-4 * velocidad_busqueda_y, Math.min(.75 * velocidad_busqueda_y, dy));		
+		//console.log("vx = "+mundo.camara.vx+" vy="+mundo.camara.vy);
+		mundo.camara.buscando = true;
+		//console.log(mundo.camara.vx);
+	}
+	else
+	{
+		mundo.camara.buscando = false;
+	}
+		
+	/*if(mundo.jugador.estado != "muerto" && mundo.jugador.estado != "parado")
+	{	
+		if(mundo.jugador.x > mundo.camara.x + mundo.camara.ancho / 2.5)
+			mundo.camara.x += mundo.jugador.last_vx;
+	} */
+	
+	if(mundo.camara.buscando)
+	{
+		//console.log("buscando");
+		mundo.camara.x += mundo.camara.vx;
+		mundo.camara.y += mundo.camara.vy;
+	}
+	//mundo.camara.y += mundo.camara.vy;*/
+	//console.log("camx = "+mundo.camara.x+" camy="+mundo.camara.y);
+	
+	
+	//if(mundo.jugador.estado == "muerto" || mundo.jugador.estado == "parado") return;
+	
+	// avanza hacia adelante
+	//if(mundo.jugador.x > mundo.camara.x + mundo.camara.ancho / 3)
+		//mundo.camara.x = mundo.jugador.x - mundo.camara.ancho / 3;
+	
+}
+
+var boton_pulsado = false;
+function boton()
+{
+	boton_pulsado = true;
+	
+	//if(estado_juego == "inicio")
+		//iniciar_nivel();
+			
+	if(estado_juego == "jugando")
+		jugador_saltar();	
+}
+
+
+function suelta_boton(evt)
+{
+	boton_pulsado = false; 
+	mundo.jugador.contador_impulso = 0;
+	evt.preventDefault();
+}
+
+function comprueba_teclado(evt)
+{
+	switch(evt.code)
+	{
+		case "Space":		
+			boton();
+			evt.preventDefault();
+			break;
+			
+		case "ArrowRight":
+			mundo.jugador.x0 = mundo.jugador.x + 200;
+			colocar_jugador();
+			evt.preventDefault();
+			break;
+			
+		case "ArrowLeft":
+			mundo.jugador.x0 = mundo.jugador.x - 200;
+			colocar_jugador();
+			evt.preventDefault();
+			break;
+			
+		case "NumpadAdd":
+			mundo.jugador.velocidad++;
+			evt.preventDefault();
+			break;
+		
+		case "NumpadSubtract":
+			mundo.jugador.velocidad--;
+			evt.preventDefault();
+			break;
+	
+			
+		case "Digit1":
+			modo_3d = false;
+			suelo_dibujado_detras = false;
+			suelo_dibujado_delante = false;
+			break;
+			
+		case "Digit2":
+			modo_3d = true;
+			lados_planos = true;			
+			suelo_dibujado_detras = false;
+			suelo_dibujado_delante = false;
+			break;
+
+		case "Digit3":
+			modo_3d = true;
+			lados_planos = false;
+			suelo_dibujado_detras = false;
+			suelo_dibujado_delante = false;
+			break;
+			
+		case "Digit4":
+			rejilla_3d = !rejilla_3d;
+			if(rejilla_3d)
+				modo_3d = true;
+			suelo_dibujado_detras = false;
+			suelo_dibujado_delante = false;
+			break;
+	}
+	
+}
+function jugador_saltar(forzar_salto, doble)
+{
+	if(!forzar_salto)
+	{
+		if(["muerto", "saltando", "parado", "rebotando"].includes(mundo.jugador.estado)) return;
+	
+		// si está cayendo o saltando no hace nada
+		if(mundo.jugador.caida != 0)
+			return;
+	}
+	
+	let salto = mundo.jugador.salto;
+	if(doble)
+		salto *=  2;
+	mundo.jugador.caida = salto;
+	mundo.jugador.contador_impulso = mundo.jugador.impulso_frames;
+	
+	jugador_nuevo_estado("saltando");
+	mundo.jugador.en_suelo = false;
+	
+	//if(!forzar_salto)
+		reproducir_sonido(mundo.jugador.sonidos.salto);
+}
+
+
+function borrar_canvas(ctx)
+{
+	// truco para borrar canvas: cambiarle el tamaño a cero, y luego restaurar el tamaño
+	ctx.canvas.width = 0;
+	ctx.canvas.height = 0;
+	ctx.canvas.width = Math.max(window.innerWidth, window.innerHeight);
+	ctx.canvas.height = Math.min(window.innerWidth, window.innerHeight);	
+	
+	mundo.camara.ancho = ctx.canvas.width;
+	mundo.camara.alto = ctx.canvas.height;		
+}
+
+
+function invertir_y(y)
+{
+	return ctx.canvas.height - (y - mundo.camara.y);
+}
+
+
+function invertir_yh(y)
+{
+	if(suelo_en_buffer)
+		return ctx_suelo_detras.canvas.height - y;
+	else
+		return ctx.canvas.height - y;
+}
+
+
+var posicion_nubes = 0;
+function dibuja_nubes(ctx)
+{
+	let nubes = document.getElementById("cielo_nubes");
+	posicion_nubes += .1;
+	nubes.style.backgroundPositionX = posicion_nubes + "px";	
+}
+
+function dibuja_fondo(ctx)
+{	
+	let camx = mundo.camara.x / 10;
+	let camy = mundo.camara.y / 10;
+	let arboles = document.getElementById("arboles");
+	arboles.style.backgroundPositionX = -camx + "px";
+	//arboles.style.backgroundPositionY = -camy + "px";
+}
+
+
+
+function dibuja_suelo(ctx)
+{
+	let ancho = mundo.nivel.bloque.ancho;
+	let alto = mundo.nivel.bloque.alto;	
+	let camx = Math.floor(mundo.camara.x);
+	let camy = Math.floor(mundo.camara.y);
+	// definimos el color de relleno
+	//ctx.fillStyle = "rgb(100, 75, 50)"; 	
+	
+	if(!imagen_suelo)
+		imagen_suelo = document.getElementById("ground");
+	if(imagen_suelo && !patron_suelo)
+		patron_suelo = ctx.createPattern(imagen_suelo, 'repeat');
+		
+	if(!imagen_hierba)
+		imagen_hierba = document.getElementById("hierba");
+	//if(!imagen_hierba)
+		//imagen_cesped = document.getElementById("cesped");
+	
+	// empezamos un path
+	ctx.beginPath();
+		
+	anterior = 0;
+	ctx.moveTo(0, invertir_yh(0));
+	for(var i = 0; i < mundo.nivel.suelo.length; i++)
+	{
+		let altura = mundo.nivel.suelo[i];
+		let x = i * ancho;
+		let y = altura * alto ;
+		if(altura == 0)
+		{
+			// si es altura 0 hacemos un hoyo
+			ctx.lineTo(x - camx - ancho, invertir_yh(0));
+		}
+		else
+		if(anterior==0)
+		{
+			// si venimos de un hoyo...
+			ctx.lineTo(x - camx, invertir_yh(0));			
+		}
+		if(y!=0)
+			ctx.lineTo(x - camx, invertir_y(y));		
+		
+		anterior = altura;
+	}
+	ctx.lineTo(ctx.canvas.width, invertir_yh(0));
+	
+	//cerramos el path (camino)
+	ctx.closePath();
+	
+	ctx.fillStyle = patron_suelo;
+	
+	ctx.save();
+	ctx.translate(-camx % mundo.nivel.sprites.suelo.ancho, camy % mundo.nivel.sprites.suelo.alto);
+	// rellenamos el polígono (path) con el color de relleno
+	ctx.fill();
+	ctx.restore();
+	
+}
+
+
+
+
+function dibuja_suelo_3d(ctx)
+{
+	let ancho = mundo.nivel.bloque.ancho;
+	let alto = mundo.nivel.bloque.alto;	
+	let camx = Math.floor(mundo.camara.x);
+	let camy = Math.floor(mundo.camara.y);
+	
+	let dx = mundo.nivel.ancho_suelo * mundo.nivel.perspectiva;
+	let dy = mundo.nivel.ancho_suelo / mundo.nivel.perspectiva;	
+	
+	let anterior = 0;
+	let x1;
+	let y1;
+	let x2;
+	let y2;	
+	
+	for(var i = 0; i < mundo.nivel.suelo.length - 1; i++)
+	{
+		let altura1 = mundo.nivel.suelo[i];
+		let altura2 = mundo.nivel.suelo[i+1];
+		if(altura1 && altura2)
+		{
+			x1 = i * ancho;
+			y1 = altura1 * alto;
+			x2 = x1 + ancho;
+			y2 = altura2 * alto;
+	
+			let m = Math.min(altura1, altura2);
+			let pendiente = (altura1 - m + 1)/ (altura2 - m + 1);
+
+			// dibuja hierba
+			ctx.beginPath();
+			ctx.moveTo(x1 + dx/2 - camx, invertir_y(y1 + dy/2));
+			ctx.lineTo(x2 + 1 + dx/2 - camx, invertir_y(y2 + dy/2));		
+			ctx.lineTo(x2 + 1 - dx/2 - camx, invertir_y(y2 - dy/2));		
+			ctx.lineTo(x1 - dx/2 - camx, invertir_y(y1 - dy/2));		
+			ctx.closePath();			
+			ctx.fillStyle = "rgb(0,"+ Math.max(0, Math.min(255, 128+(pendiente*40))) +",0)";
+			ctx.fill();	
+			
+			anterior = altura2;
+		}
+		else if(anterior)
+		{
+			ctx.beginPath();
+			ctx.moveTo(x2 + dx/2 - camx, invertir_y(y2 + dy/2));		
+			ctx.lineTo(x2 - dx/2 - camx, invertir_y(y2 - dy/2));
+			ctx.lineTo(x2 - dx/2 - camx, invertir_yh(0));
+			ctx.lineTo(x2 + dx/2 - camx, invertir_yh(0));
+			ctx.closePath();			
+			ctx.fillStyle = "red";
+			ctx.fill();	
+			
+			ctx.beginPath();
+			ctx.moveTo(x2 - dx/2 - camx, invertir_yh(0));
+			ctx.lineTo(x2 - dx/2 - camx, invertir_y(y2 - dy/2));
+			j = i - 1;
+			let x, y;
+			while(j >= 0 && mundo.nivel.suelo[j])
+			{
+				let altura = mundo.nivel.suelo[j];								
+				x = j * ancho;
+				y = altura * alto;					
+				ctx.lineTo(x - dx/2 - camx, invertir_y(y - dy/2));
+				
+				j--;
+			}
+			ctx.lineTo(x - dx/2 - camx, invertir_yh(0));
+			ctx.closePath();
+			ctx.fillStyle = "brown";
+			ctx.fill();
+		}
+	}
+	
+	
+	
+	//anterior = 0;
+	/*ctx.moveTo(0 + dx / 2, invertir_yh(0));
+	for(var i = 0; i < mundo.nivel.suelo.length; i++)
+	{
+		let altura = mundo.nivel.suelo[i];
+		let x = i * ancho;
+		let y = altura * alto ;
+		if(altura == 0)
+		{
+			// si es altura 0 hacemos un hoyo
+			ctx.lineTo(x - camx - ancho, invertir_yh(0));
+		}
+		else
+		if(anterior==0)
+		{
+			// si venimos de un hoyo...
+			ctx.lineTo(x - camx, invertir_yh(0));			
+		}
+		if(y!=0)
+			ctx.lineTo(x - camx, invertir_y(y));		
+		
+		anterior = altura;
+	}
+	ctx.lineTo(ctx.canvas.width, invertir_yh(0));
+	
+	//cerramos el path (camino)
+	ctx.closePath();
+	*/
+	
+	/*ctx.fillStyle = patron_suelo;
+	
+	ctx.save();
+	ctx.translate(-camx % mundo.nivel.sprites.suelo.ancho, camy % mundo.nivel.sprites.suelo.alto);
+	// rellenamos el polígono (path) con el color de relleno
+	ctx.fill();
+	ctx.restore();*/
+	
+	
+	// ahora dibujamos el cesped
+	
+	if(0)
+	for(var i = 0; i < mundo.nivel.suelo.length; i++)
+	{	
+		let x = i * ancho;
+		if(x > camx + mundo.camara.ancho + ancho ||
+			x < camx - mundo.camara.ancho
+		)
+			continue;
+
+		let altura1 = mundo.nivel.suelo[i];
+		let altura2 = mundo.nivel.suelo[i + 1];
+		if(altura1 > 0 && altura2 > 0)
+		{
+			let inc = imagen_hierba.width;
+			for(var offset = 0; offset < ancho; offset += inc)
+			{
+				let ratio = offset / ancho;
+				let x1 = x + offset;
+				let y1 = (altura1 + ratio * (altura2 - altura1)) * alto;
+				ctx.drawImage(imagen_hierba, x1 - camx, invertir_y(y1) - mundo.nivel.sprites.hierba.alto);
+			}			
+		}
+	}
+}
+
+
+
+
+
+function dibuja_suelo_3d_completo(ctx)
+{
+	let ancho = mundo.nivel.bloque.ancho;
+	let alto = mundo.nivel.bloque.alto;	
+	let camx = Math.floor(mundo.camara.x);
+	let camy = Math.floor(mundo.camara.y);
+	// definimos el color de relleno
+	//ctx.fillStyle = "rgb(100, 75, 50)"; 	
+	
+	if(!imagen_suelo)
+		imagen_suelo = document.getElementById("ground");
+	if(imagen_suelo && !patron_suelo)
+		patron_suelo = ctx.createPattern(imagen_suelo, 'repeat');
+		
+	if(!imagen_hierba)
+		imagen_hierba = document.getElementById("hierba");
+	
+	// empezamos un path
+	//ctx.beginPath();
+	
+	let dx = mundo.nivel.ancho_suelo * mundo.nivel.perspectiva;
+	let dy = mundo.nivel.ancho_suelo / mundo.nivel.perspectiva;	
+	
+	let anterior = 0;
+	let x1;
+	let y1;
+	let x2;
+	let y2;
+	
+	ctx.lineWidth = 1;
+	
+	for(var i = 0; i < mundo.nivel.suelo.length - 1; i++)
+	{
+		let altura1 = mundo.nivel.suelo[i];
+		let altura2 = mundo.nivel.suelo[i+1];
+		if(altura1 && altura2)
+		{
+			x1 = i * ancho;
+			y1 = altura1 * alto;
+			x2 = x1 + ancho;
+			y2 = altura2 * alto;
+	
+			let m = Math.min(altura1, altura2);
+			let pendiente = (altura1 - m + 1)/ (altura2 - m + 1);
+
+			// dibuja hierba
+			ctx.beginPath();
+			ctx.moveTo(x1 + dx/2 - camx, invertir_y(y1 + dy/2));
+			ctx.lineTo(x2 + dx/2 - camx, invertir_y(y2 + dy/2));		
+			ctx.lineTo(x2 - dx/2 - camx, invertir_y(y2 - dy/2));		
+			ctx.lineTo(x1 - dx/2 - camx, invertir_y(y1 - dy/2));		
+			ctx.closePath();			
+			ctx.strokeStyle = rgb_pendiente(pendiente);
+			ctx.fillStyle = rgb_pendiente(pendiente);			
+			ctx.fill();	
+			
+			anterior = altura2;
+		}
+		else if(anterior)
+		{
+			ctx.beginPath();
+			ctx.moveTo(x2 + dx/2 - camx, invertir_y(y2 + dy/2));		
+			ctx.lineTo(x2 - dx/2 - camx, invertir_y(y2 - dy/2));
+			ctx.lineTo(x2 - dx/2 - camx, invertir_yh(0));
+			ctx.lineTo(x2 + dx/2 - camx, invertir_yh(0));
+			ctx.closePath();			
+			ctx.fillStyle = "red";
+			ctx.fill();				
+						
+			ctx.beginPath();
+			ctx.moveTo(x2 - dx/2 - camx, invertir_yh(0));
+			ctx.lineTo(x2 - dx/2 - camx, invertir_y(y2 - dy/2));
+			j = i - 1;
+			let x, y;
+			while(j >= 0 && mundo.nivel.suelo[j])
+			{
+				let altura = mundo.nivel.suelo[j];								
+				x = j * ancho;
+				y = altura * alto;					
+				ctx.lineTo(x - dx/2 - camx, invertir_y(y - dy/2));
+				
+				j--;
+			}
+			ctx.lineTo(x - dx/2 - camx, invertir_yh(0));
+			ctx.closePath();
+			ctx.fillStyle = "brown";
+			ctx.fill();
+		}
+	}
+	
+}
+
+
+var patron_suelo = null;
+var suelo_dibujado_delante = false;
+var suelo_dibujado_detras = false;
+function dibuja_suelo2d(ctx)
+{
+	let camx = mundo.camara.x;
+	let camy = mundo.camara.y;
+	
+	if(suelo_en_buffer) 
+	{
+		var c = document.getElementById("canvas_suelo_detras");
+		c.style.marginLeft = -camx + "px";
+		c.style.marginTop = camy + "px";
+		
+		if(suelo_dibujado_detras)
+			return true;	
+			
+		ctx_suelo_detras = iniciar_suelo("canvas_suelo_detras");	
+		camx = 0;
+		camy = 0;
+	}
+		
+	let ancho = mundo.nivel.bloque.ancho;
+	let alto = mundo.nivel.bloque.alto;
+	
+	if(!patron_suelo)
+	{
+		let img = document.getElementById("suelo");
+		patron_suelo = ctx.createPattern(img, 'repeat');
+		return;
+	}
+		
+	ctx.lineWidth = 1;
+	ctx.strokeStyle = "white";
+	ctx.fillStyle = patron_suelo;
+	
+	// empezamos un path
+	ctx.beginPath();
+		
+	anterior = 0;
+	ctx.moveTo(0, invertir_yh(0));
+	for(var i = 0; i < mundo.nivel.suelo.length; i++)
+	{	
+		let x = i * ancho;
+		/*if( x > camx + mundo.camara.ancho + ancho || x < camx - mundo.camara.ancho )
+			continue;
+		*/
+		let altura = mundo.nivel.suelo[i];
+		let y = altura * alto ;
+		if(altura==0)
+		{
+			// si es altura 0 hacemos un hoyo
+			ctx.lineTo(x - camx - ancho, invertir_yh(0));			
+		}
+		else
+		{
+			// si venimos de un hoyo...
+			if(anterior==0)
+				ctx.lineTo(x - camx, invertir_yh(0));			
+			ctx.lineTo(x - camx, invertir_y(y));		
+		}		
+		anterior = altura;
+	}
+	ctx.lineTo(ctx.canvas.width, invertir_yh(0));
+	
+	//cerramos el path (camino)
+	ctx.closePath();
+	
+	ctx.save();
+	ctx.translate(-camx % mundo.nivel.sprites.suelo.ancho, mundo.camara.y % mundo.nivel.sprites.suelo.alto);
+	// rellenamos el polígono (path) con el color de relleno
+	ctx.fill();
+	ctx.restore();
+	
+	suelo_dibujado_detras = true;
+	
+}
+
+function rgb_pendiente(p, r, g, b)
+{
+	//p = Math.floor(p/2) * 2;
+	r = Math.max(r / 8, Math.min(255, r / 8 + r*p/4 ));
+	g = Math.max(g / 8, Math.min(255, g / 8 + g*p/4 ));
+	b = Math.max(b / 8, Math.min(255, b / 8 + b*p/4 ));
+	return "rgb("+r+","+ g+","+b+")";
+}
+
+function dibuja_suelo3d_detras_sin_precalculos(ctx)
+{
+	let ancho = mundo.nivel.bloque.ancho;
+	let alto = mundo.nivel.bloque.alto;	
+	let camx = Math.floor(mundo.camara.x);
+	let camy = Math.floor(mundo.camara.y);
+	// definimos el color de relleno
+	//ctx.fillStyle = "rgb(100, 75, 50)"; 	
+	
+	if(!imagen_suelo)
+		imagen_suelo = document.getElementById("ground");
+	if(imagen_suelo && !patron_suelo)
+		patron_suelo = ctx.createPattern(imagen_suelo, 'repeat');
+		
+	if(!imagen_hierba)
+		imagen_hierba = document.getElementById("hierba");
+	
+	// empezamos un path
+	//ctx.beginPath();
+	
+	let dx = mundo.nivel.ancho_suelo * mundo.nivel.perspectiva;
+	let dy = mundo.nivel.ancho_suelo / mundo.nivel.perspectiva;	
+	
+	let anterior = 0;
+	let x1;
+	let y1;
+	let x2;
+	let y2;
+	
+	ctx.lineWidth = 1;
+	
+	for(var i = 0; i < mundo.nivel.suelo.length - 1; i++)
+	{
+		let altura1 = mundo.nivel.suelo[i];
+		let altura2 = mundo.nivel.suelo[i+1];
+		if(altura1 && altura2)
+		{
+			x1 = i * ancho;
+			y1 = altura1 * alto;
+			x2 = x1 + ancho;
+			y2 = altura2 * alto;
+	
+			let m = Math.min(altura1, altura2);
+			let pendiente = (altura1 - m + 1)/ (altura2 - m + 1);
+
+			// dibuja hierba
+			ctx.beginPath();
+			ctx.moveTo(x1 + dx/2 - camx, invertir_y(y1 + dy/2));
+			ctx.lineTo(x2 + dx/2 - camx, invertir_y(y2 + dy/2));		
+			ctx.lineTo(x2 /*- dx/2*/ - camx, invertir_y(y2 /*- dy/2*/));		
+			ctx.lineTo(x1 /*- dx/2*/ - camx, invertir_y(y1 /*- dy/2*/));		
+			ctx.closePath();		
+			ctx.strokeStyle = rgb_pendiente(pendiente, 100, 255, 100);
+			ctx.fillStyle = strokeStyle;
+			ctx.fill();	
+			ctx.stroke();
+			
+			anterior = altura2;
+		}
+		else if(anterior)
+		{
+			// dibuja la parte iluminada del precipicio
+			ctx.beginPath();
+			ctx.moveTo(x2 + dx/2 - camx, invertir_y(y2 + dy/2));		
+			ctx.lineTo(x2 - dx/2 - camx, invertir_y(y2 - dy/2));
+			ctx.lineTo(x2 - dx/2 - camx, invertir_yh(0));
+			ctx.lineTo(x2 + dx/2 - camx, invertir_yh(0));
+			ctx.closePath();			
+			ctx.fillStyle = "rgb(0, 240, 0)";
+			ctx.fill();	
+		}
+	}	
+}
+
+
+
+
+function dibuja_suelo3d_detras(ctx)
+{
+	let camx = mundo.camara.x;
+	let camy = mundo.camara.y;
+	
+	if(suelo_en_buffer) 
+	{
+		var c = document.getElementById("canvas_suelo_detras");
+		c.style.marginLeft = -camx + "px";
+		c.style.marginTop = camy + "px";
+		
+		if(suelo_dibujado_detras)
+			return true;	
+			
+		ctx_suelo_detras = iniciar_suelo("canvas_suelo_detras");	
+		camx = 0;
+		camy = 0;
+	}
+
+	if(imagen_suelo && !patron_suelo)
+		patron_suelo = ctx.createPattern(imagen_suelo, 'repeat');
+	
+	let dx = mundo.nivel.ancho_suelo * mundo.nivel.perspectiva;
+	let dy = mundo.nivel.ancho_suelo / mundo.nivel.perspectiva;				
+			
+	if(!mundo.calculos)
+		mundo.calculos = calcula_valores_suelo();
+	
+	let anterior = 0;
+	for(var i = 0; i < mundo.nivel.suelo.length - 2; i++)
+	{
+		let c1 = mundo.calculos.n[i];
+		let c2 = mundo.calculos.n[i+1];
+		if(c1.a1 && c1.a2)
+		{
+			// hay que dibujar los cuadros a la inversa, desde lo más lejano a lo más cercano
+			// (basta con dibujar 2 ó 3 cuadros)
+			//if(0)
+			if(!lados_planos)			
+			//for(var k = mundo.calculos.nk - 1 - 3; k < mundo.calculos.nk; k++) 
+			for(var k = mundo.calculos.nk / 2; k < mundo.calculos.nk - 1; k++) 
+			{				
+				ctx.beginPath();
+				let p0 = c1.l[k];
+				let p1 = c2.l[k];
+				let p2 = c2.l[(k+1) % mundo.calculos.nk];
+				let p3 = c1.l[(k+1) % mundo.calculos.nk];
+				ctx.moveTo(p0.x - camx, invertir_y(p0.y));
+				ctx.lineTo(p1.x - camx, invertir_y(p1.y));
+				ctx.lineTo(p2.x - camx, invertir_y(p2.y));
+				ctx.lineTo(p3.x - camx, invertir_y(p3.y));
+				ctx.closePath();
+				if(!rejilla_3d)
+					dibuja_poligono_suelo(ctx, p0);
+				else
+					ctx.stroke();
+			}
+		
+			// dibuja camino
+			if(1)
+			{
+				ctx.beginPath();
+				ctx.moveTo(c1.h.x1 + dx/2 - camx, invertir_y(c1.h.y1 + dy/2));
+				ctx.lineTo(c1.h.x2 + dx/2 - camx, invertir_y(c1.h.y2 + dy/2));		
+				ctx.lineTo(c1.h.x2 /*- dx/2*/ - camx, invertir_y(c1.h.y2 /*- dy/2*/));		
+				ctx.lineTo(c1.h.x1 /*- dx/2*/ - camx, invertir_y(c1.h.y1 /*- dy/2*/));		
+				ctx.closePath();
+				
+				/*if(!c1.g)
+				{
+					c1.g = ctx.createLinearGradient(c1.h.x1,  invertir_y(c1.h.y1 + dy/2), c1.h.x2 - dx / 2, invertir_y(c1.h.y2 - dy/2 ) );
+					c1.g.addColorStop(0, "black");
+					c1.g.addColorStop(1, "white");
+				}*/
+				ctx.save();
+				//ctx.translate( /*dx/2*/ - camx, +camy);
+				//ctx.fillStyle = c1.g;
+				//ctx.strokeStyle = c1.g;
+				ctx.fillStyle = "rgb("+ Math.max(Math.min(125, 50+c1.p*30)) +", 0, 0)";
+				ctx.strokeStyle = ctx.fillStyle;
+				//ctx.fillStyle = rgb_pendiente(c1.p);
+				if(!rejilla_3d)
+					ctx.fill();	
+				ctx.stroke();
+				ctx.restore();
+			}
+			anterior = c1.a2;
+			// dibuja los rectángulos hacia abajo de la ladera
+		
+		}
+		else if(anterior && !lados_planos)
+		{
+			ctx.beginPath();
+			c1 = mundo.calculos.n[i];
+			let p0 = c1.l[0];
+			ctx.moveTo(p0.x - camx, invertir_y(p0.y));		
+			for(var k = 1; k < mundo.calculos.nk; k++)
+			{
+				p0 = c1.l[k];
+				ctx.lineTo(p0.x - camx, invertir_y(p0.y));		
+				if(k == mundo.calculos.nk/2 - 1 && p0.y > camy) // lanza el polígono hasta hallar el Y = 0
+				{
+					ctx.lineTo(p0.x - camx, invertir_yh(0));
+					let p1 = c1.l[k+1];
+					ctx.lineTo(p1.x - camx, invertir_yh(0));
+				}
+			}
+			ctx.closePath();			
+			ctx.lineWidth = 1;			
+			ctx.strokeStyle = "red";//rgb_pendiente(p0.p);
+			if(!rejilla_3d)
+			{
+				ctx.save();			
+				ctx.fillStyle = "brown";//patron_suelo;
+				//ctx.transform(1,-0.9,0,1,0, 0);
+				//ctx.translate(-camx % mundo.nivel.sprites.suelo.ancho, camy % mundo.nivel.sprites.suelo.alto);
+				ctx.fill();	
+				ctx.restore();
+			}
+			else
+			ctx.stroke();
+			
+			anterior = 0;
+		}
+	}
+	
+	suelo_dibujado_detras = true;
+}
+
+
+function calcula_valores_suelo()
+{
+	let ancho = mundo.nivel.bloque.ancho;
+	let alto = mundo.nivel.bloque.alto;	
+	
+	
+	var r = {
+		nk : 28,
+		n :[],
+		fp : 1.41, // debe ser más grande que 1
+		ex : .5,
+		//rm : 20,
+	};
+	
+	let dx = mundo.nivel.ancho_suelo * mundo.nivel.perspectiva;
+	let dy = mundo.nivel.ancho_suelo / mundo.nivel.perspectiva;	
+	
+	for(var i = 0; i < mundo.nivel.suelo.length - 1; i++)
+	{	
+		let altura1 = mundo.nivel.suelo[i];
+		let altura2 = mundo.nivel.suelo[i+1];
+		r.n[i] = {a1: altura1, a2: altura2};		
+		//if(!altura1) continue;
+		let m = Math.min(altura1, altura2);			
+		let pendiente = (altura1 - m + 1)/ (altura2 - m + 1);
+		x1 = i * ancho;
+		y1 = altura1 * alto;
+		x2 = x1 + ancho;
+		y2 = altura2 * alto		
+	
+		r.n[i].p = pendiente;
+		r.n[i].h = {x1: x1, y1: y1, x2: x2, y2: y2};
+		r.n[i].l = [];
+		
+		let p = pendiente / r.fp;
+		let f = r.fp;
+		let x0 = x1 - dx/2;
+		let y0 = y1 - dy/2;
+		for(var k = 0; k < r.nk / 2; k ++)
+		{
+			r.n[i].l[k] = {x: x0, y: y0, p: p};
+			x0 -= dx / 2 / f;
+			y0 -= dy / 2 * f; 
+			//y0 -= r.ap * f / 2 - vy; 
+			//vy -= r.ap / (dx/dy*f) / 2;
+			p /= f;
+			f *= r.fp;
+		}
+		
+		p = pendiente / r.fp;
+		f = r.fp
+		x0 = x1 + dx/2;
+		y0 = y1 + dy/2;
+		for(var k = r.nk - 1; k >= r.nk / 2; k --)
+		{
+			r.n[i].l[k] = {x: x0, y: y0, p: p};			
+			x0 += dx / 2 / f;
+			y0 += dy / f - dy / 2 * f; 
+			p /= f;
+			f *= r.fp;
+		}
+		/*p = pendiente / 1.2;
+		for(var k = r.nk / 2; k < r.nk; k++)
+		{
+			//r.n[i].l[k].p = p;
+			p /= 1.2;
+		}*/
+	}
+			
+	return r;
+}
+
+function dibuja_suelo3d_delante(ctx)
+{
+	let camx = mundo.camara.x;
+	let camy = mundo.camara.y;
+	
+	if(suelo_en_buffer) 
+	{
+		var c = document.getElementById("canvas_suelo_delante");
+		c.style.marginLeft = -camx + "px";
+		c.style.marginTop = camy + "px";
+		
+		if(suelo_dibujado_delante)
+			return true;	
+			
+		ctx_suelo_delante = iniciar_suelo("canvas_suelo_delante");	
+		camx = 0;
+		camy = 0;
+	}
+	
+	let ancho = mundo.nivel.bloque.ancho;
+	let alto = mundo.nivel.bloque.alto;	
+	// definimos el color de relleno
+	//ctx.fillStyle = "rgb(100, 75, 50)"; 	
+	
+	if(!imagen_suelo)
+		imagen_suelo = document.getElementById("ground");
+	if(imagen_suelo && !patron_suelo)
+		patron_suelo = ctx.createPattern(imagen_suelo, 'repeat');
+		
+	if(!imagen_hierba)
+		imagen_hierba = document.getElementById("hierba");
+	if(!patron_cesped)
+	{
+		imagen_cesped = document.getElementById("cesped");
+		patron_cesped = ctx.createPattern(imagen_cesped, 'repeat');
+	}
+	
+	if(!mundo.calculos)
+		mundo.calculos = calcula_valores_suelo();
+	
+	let dx = mundo.nivel.ancho_suelo * mundo.nivel.perspectiva;
+	let dy = mundo.nivel.ancho_suelo / mundo.nivel.perspectiva;	
+	
+	let anterior = 0;
+	let hierba = document.getElementById("hierba");
+	
+	for(var i = 0; i < mundo.nivel.suelo.length - 2; i++)
+	{
+		let c1 = mundo.calculos.n[i];
+		let c2 = mundo.calculos.n[i+1];
+		if(c1.a1 && c1.a2)
+		{
+			// dibuja hierba
+			ctx.beginPath();
+			//ctx.translate(0, 0);
+			ctx.moveTo(c1.h.x1 /*+ dx/2 */ - camx, invertir_y(c1.h.y1 /*+ dy/2*/));
+			ctx.lineTo(c1.h.x2 /*+ dx/2 */ - camx, invertir_y(c1.h.y2 /*+ dy/2*/));		
+			ctx.lineTo(c1.h.x2 - dx/2 - camx, invertir_y(c1.h.y2 - dy/2));		
+			ctx.lineTo(c1.h.x1 - dx/2 - camx, invertir_y(c1.h.y1 - dy/2));		
+			ctx.closePath();
+			
+			/*if(!c1.g)
+			{
+				c1.g = ctx.createLinearGradient(c1.h.x1,  invertir_y(c1.h.y1 + dy/2), c1.h.x2 - dx / 2, invertir_y(c1.h.y2 - dy/2 ) );
+				c1.g.addColorStop(0, "black");
+				c1.g.addColorStop(1, "white");
+			}*/
+			ctx.save();
+			//ctx.translate( /*dx/2*/ - camx, +camy);
+			//ctx.fillStyle = c1.g;
+			//ctx.strokeStyle = c1.g;
+			ctx.fillStyle = "rgb("+ Math.max(Math.min(125, 50+c1.p*30)) +", 0, 0)";
+			ctx.strokeStyle = ctx.fillStyle;
+			//ctx.fillStyle = rgb_pendiente(c1.p);
+			if(!rejilla_3d)
+				ctx.fill();	
+			ctx.stroke();
+			ctx.restore();
+			
+			anterior = c1.a2;
+			
+			// dibuja los rectángulos hacia abajo de la ladera
+			if(!lados_planos)
+			{
+				let p0,	p1, p2, p3;
+				for(var k = 0; k < mundo.calculos.nk / 2 - 1; k++)
+				{				
+					ctx.beginPath();
+					p0 = c1.l[k];
+					p1 = c2.l[k];
+					p2 = c2.l[k+1];
+					p3 = c1.l[k+1];
+					ctx.moveTo(p0.x - camx, invertir_y(p0.y));		
+					ctx.lineTo(p1.x - camx, invertir_y(p1.y));		
+					ctx.lineTo(p2.x - camx, invertir_y(p2.y));		
+					ctx.lineTo(p3.x - camx, invertir_y(p3.y));				
+					ctx.closePath();			
+					//ctx.fillStyle = ctx.strokeStyle;					
+					if(!rejilla_3d)
+					{
+						dibuja_poligono_suelo(ctx, p0);
+					}
+					else
+					{
+						ctx.strokeStyle = rgb_pendiente(p0.p, 100, 255, 100);
+						ctx.stroke();			
+					}
+					
+					//ctx.drawImage(hierba, p0.x - camx, invertir_y(p0.y + hierba.height / 2));
+				}
+				if(p3.y > camy)
+				{					
+					ctx.beginPath();
+					ctx.moveTo(p2.x - camx, invertir_y(p2.y));		
+					ctx.lineTo(p3.x - camx, invertir_y(p3.y));		
+					ctx.lineTo(p3.x - camx, invertir_yh(0));		
+					ctx.lineTo(p2.x - camx, invertir_yh(0));
+					ctx.closePath();
+					if(!rejilla_3d)
+						ctx.fill();	
+					ctx.stroke();
+				}
+				
+				
+			}
+		}
+		else if(anterior && lados_planos)
+		{
+			// dibuja la parte plana de la pared
+			// versión plana		
+			let ci = mundo.calculos.n[i];
+			
+			ctx.beginPath();
+			ctx.moveTo(ci.h.x1 + dx/2 - camx, invertir_y(ci.h.y1 + dy/2));		
+			ctx.lineTo(ci.h.x1 - dx/2 - camx, invertir_y(ci.h.y1 - dy/2));
+			ctx.lineTo(ci.h.x1 - dx/2 - camx, invertir_yh(0));
+			ctx.lineTo(ci.h.x1 + dx/2 - camx, invertir_yh(0));
+			ctx.closePath();			
+			ctx.fillStyle = "red";
+			ctx.fill();				
+				
+			ctx.beginPath();
+			ctx.moveTo(ci.h.x1 - dx/2 - camx, invertir_yh(0));
+			j = i;
+			//let x = ci.hx1, y;
+			while(j >= 0 && mundo.nivel.suelo[j])
+			{
+				ci = mundo.calculos.n[j];								
+				x = ci.h.x1;
+				y = ci.h.y1;
+				ctx.lineTo(x - dx/2 - camx, invertir_y(y - dy/2));				
+				j--;
+			}
+			ctx.lineTo(x - dx/2 - camx, invertir_yh(0));
+			ctx.closePath();
+			ctx.fillStyle = patron_suelo;//"brown";
+			if(!rejilla_3d)
+			{
+				ctx.save();
+				ctx.translate(-camx % mundo.nivel.sprites.suelo.ancho, camy % mundo.nivel.sprites.suelo.alto);
+				// rellenamos el polígono (path) con el color de relleno
+				ctx.fill();
+				ctx.restore();
+			}
+			else
+			ctx.stroke();
+			
+			
+			/*ctx.beginPath();
+			let cj = mundo.calculos.n[i];
+			ctx.moveTo(c1.h.x1 - dx/2 - camx, invertir_yh(0));
+			ctx.lineTo(c1.h.x2 - dx/2 - camx, invertir_y(c1.h.y2 - dy/2));
+			j = i - 1;
+			let x, y, first = true;
+			while(j >= 0 && mundo.nivel.suelo[j])
+			{
+				cj = mundo.calculos.n[j];
+				x = cj.h.x2;
+				y = cj.h.y2;
+				ctx.lineTo(x - dx/2 - camx, invertir_y(y - dy/2)); 
+				first = false;
+				j--;
+			}
+			ctx.lineTo(x - dx/2 - camx, invertir_yh(0));
+			ctx.closePath();
+			ctx.fillStyle = "green";
+			ctx.save();
+			ctx.translate(-mundo.camara.x % mundo.nivel.sprites.suelo.ancho, mundo.camara.y % mundo.nivel.sprites.suelo.alto);
+			// rellenamos el polígono (path) con el color de relleno
+			if(!rejilla_3d)
+				ctx.fill();
+			ctx.restore();
+			*/
+			anterior = 0;
+		}
+	}	
+	
+	suelo_dibujado_delante = true;
+}
+
+
+function dibuja_poligono_suelo(ctx, p0)
+{
+	if(!imagen_cesped) return;
+	
+	let camx = mundo.camara.x;
+	let camy = mundo.camara.y;
+	ctx.save();
+	ctx.fillStyle = patron_cesped;						
+	ctx.strokeStyle = ctx.fillStyle;
+	ctx.translate((-p0.x - camx)  % imagen_cesped.width, (-p0.y + camy) % imagen_cesped.height);
+	ctx.stroke();
+	ctx.fill();						
+	ctx.fillStyle = rgb_pendiente(p0.p, 100, 255, 100);
+	ctx.strokeStyle = ctx.fillStyle;
+	ctx.globalAlpha = .3;
+	ctx.fill();	
+	ctx.stroke();
+	ctx.restore();
+}
+
+function dibuja_segmentos(ctx)
+{
+	let camx = mundo.camara.x;
+	// dibuja plataforma
+	let segmento = mundo.jugador.vectores[mundo.jugador.vectores.length-1];
+	ctx.fillStyle = "rgb(100, 100, 100)";
+	ctx.fillRect(segmento.x1 - camx, invertir_y(segmento.y1), segmento.x2 - segmento.x1, -6);
+		
+	ctx.beginPath();
+	ctx.lineWidth = 4;
+	ctx.strokeStyle = "yellow";
+	
+	for(var i=0; i < mundo.jugador.intersecciones.length; i++)
+		traza_intersecta(ctx, mundo.jugador.intersecciones[i]);
+	
+	ctx.stroke();
+	
+	ctx.strokeStyle = "pink";	
+	
+	for(var i=0; i < mundo.jugador.intersecciones.length; i++)
+		traza_intersecta(ctx, mundo.jugador.intersecciones[i], true);
+	
+	ctx.stroke();
+	
+	ctx.strokeStyle = "black";
+	
+	ctx.closePath();
+	
+}
+
+
+function traza_intersecta(ctx, intersecta, vector)
+{
+	let camx = mundo.camara.x; 
+	if(intersecta)
+	{
+		if(vector)
+		{
+			segmento = intersecta.vector;
+			if(segmento)
+			{
+				ctx.moveTo(segmento.x1 - camx, invertir_y(segmento.y1));
+				ctx.lineTo(segmento.x2 - camx, invertir_y(segmento.y2));
+			}
+		}
+		else
+		{
+			segmento = intersecta.segmento_suelo;
+			if(segmento)
+			{
+				ctx.moveTo(segmento.x1 - camx, invertir_y(segmento.y1));
+				ctx.lineTo(segmento.x2 - camx, invertir_y(segmento.y2));
+			}
+			
+			segmento = intersecta.segmento_plataforma;
+			if(segmento)
+			{
+				ctx.moveTo(segmento.x1 - camx, invertir_y(segmento.y1));
+				ctx.lineTo(segmento.x2 - camx, invertir_y(segmento.y2));
+			}	
+			
+			segmento = intersecta.segmento_enemigo;
+			if(segmento)
+			{
+				ctx.moveTo(segmento.x1 - camx, invertir_y(segmento.y1));
+				ctx.lineTo(segmento.x2 - camx, invertir_y(segmento.y2));
+			}
+			
+			segmento = intersecta.segmento_objeto;
+			if(segmento)
+			{
+				ctx.moveTo(segmento.x1 - camx, invertir_y(segmento.y1));
+				ctx.lineTo(segmento.x2 - camx, invertir_y(segmento.y2));
+			}
+		}
+	}
+}
+
+
+
+function dibuja_plataformas(ctx)
+{
+	let ancho = mundo.nivel.bloque.ancho;
+	let alto = mundo.nivel.bloque.alto;	
+	let camx = Math.floor(mundo.camara.x);
+	let camy = Math.floor(mundo.camara.y);	
+	
+	// empezamos un path
+	let imagen = document.getElementById("plataforma");
+	//ctx.fillStyle = "rgb(0, 80, 0)";
+		
+	anterior = 0;
+	for(var i = 0; i < mundo.nivel.plataformas.length; i++)
+	{	
+		let altura = mundo.nivel.plataformas[i];		
+		let x = i * ancho;
+		if(!altura || x > mundo.camara.x + mundo.camara.ancho + ancho ||
+			x < mundo.camara.x - mundo.camara.ancho
+		)
+		continue;
+
+		let y = altura * alto;
+		//ctx.fillRect(x - mundo.camara.x, y, ancho, -alto);		
+		ctx.drawImage(imagen, x - camx, invertir_y(y), ancho, alto);
+	}
+	
+}
+
+
+function dibuja_enemigos(ctx)
+{
+	let ancho = mundo.nivel.enemigos.pajaro.ancho;
+	let alto = mundo.nivel.enemigos.pajaro.alto;
+	let camx = Math.floor(mundo.camara.x);
+	let camy = Math.floor(mundo.camara.y);
+	
+	for(var pajaro of mundo.pajaros)
+	{
+		let x = Math.floor(pajaro.x);
+		let y = Math.floor(pajaro.y);
+		
+		/*if(x > camx + mundo.camara.ancho * 2 ||
+			x < camx - mundo.camara.ancho ||
+			y > camy + mundo.camara.alto + 100 // si huyó está muy alto para verlo			
+			
+		)
+		continue;*/
+	
+	
+		if(pajaro.frameContador == 0)
+		{
+			let numero_imagen = pajaro.frame + 1;
+			pajaro.imagen_actual = "pajaro_" + pajaro.estado + numero_imagen;
+			pajaro.frame = pajaro.frame + 1;
+			if(pajaro.frame >= mundo.nivel.enemigos.pajaro.animacion[pajaro.estado].length )
+			{
+				pajaro.frame = 0;
+			}
+			pajaro.frameContador = mundo.nivel.enemigos.pajaro.esperaFrames;		
+			if(pajaro.estado == "huyendo")
+				pajaro.frameContador /= 4; // la animación de huida es más rápida
+		}
+		else
+			pajaro.frameContador --;
+			
+		var imagen = document.getElementById(pajaro.imagen_actual);
+		
+		ctx.drawImage(imagen, x - ancho / 2 - camx, invertir_y(y) - alto / 2, ancho, alto); 	
+	}
+	
+	
+	ancho = mundo.nivel.enemigos.tortuga.ancho;
+	alto = mundo.nivel.enemigos.tortuga.alto;
+	
+	
+	for(var i in mundo.tortugas)
+	{
+		let tortuga = mundo.tortugas[i];
+		let x = Math.floor(tortuga.x);
+		let y = Math.floor(tortuga.y);
+		
+		/*if(x > camx + mundo.camara.ancho * 2 ||
+			x < camx - mundo.camara.ancho
+		)
+			continue;
+		*/
+	
+		if(tortuga.frameContador == 0)
+		{
+			let numero_imagen = tortuga.frame + 1;
+			tortuga.imagen_actual = "tortuga_" + tortuga.estado + numero_imagen;
+			tortuga.frame = tortuga.frame + 1;
+			if(tortuga.frame >= mundo.nivel.enemigos.tortuga.animacion[tortuga.estado].length )
+			{
+				if(tortuga.estado == "normal")
+					tortuga.frame = 0;
+				else
+					tortuga.frame--;
+			}
+			let esperaFrames = mundo.nivel.enemigos.tortuga.esperaFrames
+			if(tortuga.estado=="asustada")
+				esperaFrames = mundo.nivel.enemigos.tortuga.esperaFrames_asustado;
+			tortuga.frameContador = esperaFrames;
+		}
+		else
+			tortuga.frameContador --;
+			
+		var imagen = document.getElementById(tortuga.imagen_actual);
+		
+		// si la tortuga mira a la derecha, invertimos la imagen
+		if(tortuga.velocidad > 0)
+		{
+			ctx.save();
+			ctx.translate(x - mundo.camara.x, invertir_y(y));
+			ctx.scale(-1, 1);
+			ctx.drawImage(imagen, - ancho / 2, - alto / 2); 	
+			ctx.restore();
+		}
+		else
+			ctx.drawImage(imagen, x - ancho / 2 - camx, invertir_y(y) - alto / 2, ancho, alto); 	
+	}
+	
+}
+
+function dibuja_monedas(ctx)
+{
+	let camx = Math.floor(mundo.camara.x);
+	let camy = Math.floor(mundo.camara.y);
+	let	ancho = mundo.nivel.objetos.moneda.ancho;
+	let alto = mundo.nivel.objetos.moneda.alto;	
+	
+	for(var moneda of mundo.monedas)
+	{
+		if( moneda.recogida) continue;
+		
+		let x = moneda.x;
+		let y = moneda.y;
+		
+		/*if(x > camx + mundo.camara.ancho + ancho ||
+			x < camx - ancho
+		)
+			continue;
+		*/
+	
+		if(moneda.frameContador == 0)
+		{
+			let numero_imagen = moneda.frame + 1;
+			moneda.imagen_actual = "moneda" + numero_imagen;
+			moneda.frame = moneda.frame + 1;
+			if(moneda.frame >= mundo.nivel.objetos.moneda.animacion.length )
+			{
+				moneda.frame = 0;
+			}
+			moneda.frameContador = mundo.nivel.objetos.moneda.esperaFrames;		
+		}
+		else
+			moneda.frameContador --;
+	
+		let imagen = document.getElementById(moneda.imagen_actual);
+		
+		ctx.drawImage(imagen, x - ancho / 2 - camx, invertir_y(y) - alto / 2); 	
+	}
+}
+
+function dibuja_lluvia(ctx)
+{
+	let camx = Math.floor(mundo.camara.x);
+	let camy = Math.floor(mundo.camara.y);
+	let imagen = document.getElementById(mundo.nivel.objetos.gota.sprite);	
+	
+	for(var gota of mundo.gotas)
+	{
+		if(!gota.cayendo) continue;
+		
+		if(!gota.cayendo || gota.x > camx + mundo.camara.ancho || gota.x < camx - mundo.camara.ancho
+		|| gota.y < camy || gota.y > camy + mundo.camara.alto + 20)
+			continue;
+			
+		ctx.drawImage(imagen, gota.x - mundo.camara.x, invertir_y(gota.y), mundo.nivel.objetos.gota.ancho, mundo.nivel.objetos.gota.alto); 	
+	}	
+}
+
+function dibuja_vegetacion(ctx)
+{
+	let camx = Math.floor(mundo.camara.x);
+	let camy = Math.floor(mundo.camara.y);
+	let	ancho = mundo.nivel.objetos.moneda.ancho;
+	
+	let imagen = document.getElementById(mundo.nivel.objetos.flor.sprite);	
+	for(var flor of mundo.flores)
+	{
+		if(flor.x > camx + mundo.camara.ancho || flor.x < camx - imagen.width )
+			continue;
+			
+		ctx.drawImage(imagen, flor.x - imagen.width / 2 - camx, invertir_y(flor.y) - imagen.height + 10); 	
+	}	
+	
+	imagen = document.getElementById(mundo.nivel.objetos.arbol.sprite);	
+	for(var arbol of mundo.arboles)
+	{
+		if(arbol.x > camx + mundo.camara.ancho + imagen.width || arbol.x < camx - imagen.width)
+			continue;
+			
+		ctx.drawImage(imagen, arbol.x - imagen.width / 2 - camx, invertir_y(arbol.y) - imagen.height + 20);
+	}
+	
+	
+	imagen = document.getElementById(mundo.nivel.objetos.arbusto.sprite);	
+	for(var arbusto of mundo.arbustos)
+	{
+		if(arbusto.x > camx + mundo.camara.ancho + imagen.width || arbusto.x < camx -  imagen.width)
+			continue;
+			
+		ctx.drawImage(imagen, arbusto.x - imagen.width / 2 - camx, invertir_y(arbusto.y) - imagen.height );
+	}	
+}
+
+
+
+function dibuja_setas(ctx)
+{
+	let camx = Math.floor(mundo.camara.x);
+	let camy = Math.floor(mundo.camara.y);
+	let	ancho = mundo.nivel.objetos.moneda.ancho;
+	
+	for(var seta of mundo.setas)
+	{
+		//if(seta.x > camx + mundo.camara.ancho || seta.x < camx - mundo.camara.ancho)
+			//continue;
+			
+		let alto_seta_original = mundo.nivel.objetos.seta.alto;
+		let ancho_seta = mundo.nivel.objetos.seta.ancho;
+		let alto_seta = alto_seta_original;
+		
+		seta.estado = "normal";
+		if(seta.rebotando > 0)
+		{
+			seta.estado = "rebotando";
+			//console.log(seta.dy);
+			if(seta.dy > 0)
+			{
+				alto_seta -= seta.dy;
+				ancho_seta += seta.dy / 1.2;
+			}
+			//alto_seta = seta.dy;
+			//ancho_seta *= .8*ancho_seta/alto_seta;
+			//seta.rebotando / seta.rebote;
+		}		
+		
+		
+		if(1)
+		{
+		imagen = document.getElementById(mundo.nivel.objetos.seta.sprite[seta.estado]);		
+		ctx.drawImage(imagen, seta.x - ancho_seta / 2 - camx, invertir_y(seta.y + alto_seta), ancho_seta, alto_seta  ); 	
+		}
+		else
+		{		
+		ctx.fillStyle = "orange";
+		ctx.fillRect(seta.x - ancho_seta / 2 - camx, invertir_y(seta.y + alto_seta), ancho_seta, alto_seta);
+		}
+	}	
+}	
+
+
+function dibuja_objetos_detras(ctx)
+{
+	dibuja_vegetacion(ctx);
+	
+	dibuja_monedas(ctx);	
+}
+
+function dibuja_objetos_delante(ctx)
+{
+	dibuja_setas(ctx);
+	
+	dibuja_lluvia(ctx);
+}
+
+function jugador_nuevo_estado(estado, reiniciar)
+{
+	if(estado == "corriendo")
+		mundo.jugador.caida = 0;
+		
+	if(mundo.jugador.estado != estado || reiniciar)
+	{
+		mundo.jugador.estado = "corriendo";
+		mundo.jugador.frame = 0;
+		mundo.jugador.frameContador = 0;
+		mundo.jugador.estado = estado;
+	}
+}
+
+function dibuja_jugador(ctx)
+{
+	//console.log(mundo.camara.x);
+	
+	let ancho = mundo.jugador.ancho;
+	let alto = mundo.jugador.alto;
+	let x = mundo.jugador.x;
+	let y = mundo.jugador.y; 
+	let camx = mundo.camara.x;
+	let camy = mundo.camara.y;
+	
+	if(mundo.jugador.frameContador == 0)
+	{
+		let numero_imagen = mundo.jugador.frame + 1;
+		mundo.jugador.imagen_actual = mundo.jugador.estado + numero_imagen;
+		mundo.jugador.frame = mundo.jugador.frame + 1;
+		if(mundo.jugador.frame >= mundo.jugador.animaciones[mundo.jugador.estado].length)
+		{
+			mundo.jugador.frame = 0;
+		}
+		mundo.jugador.frameContador = mundo.jugador.esperaFrames;		
+		if(mundo.jugador.frame == 3 || mundo.jugador.frame == 8)
+			reproducir_sonido_aleatorio(mundo.nivel.sonidos.pasos);
+	}
+	else
+		mundo.jugador.frameContador --;
+	
+	var imagen = document.getElementById(mundo.jugador.imagen_actual);
+	
+	
+	// dibujamos el sprite
+	if(imagen)
+	{
+		ctx.save();		
+		if(!mundo.jugador.contador_inmunidad || Math.floor(mundo.jugador.contador_inmunidad / 10) % 2 == 1)
+			ctx.globalAlpha = 1;
+		else
+			ctx.globalAlpha = .5;
+		ctx.drawImage(imagen, Math.floor(x - ancho / 2 - camx), invertir_y(y) - alto / 2 ); 	
+		ctx.restore();
+	}
+	
+}
+
+
+
+let musica_pausada = false;
+let musica_audio;
+let suena_lluvia = false;
+function reproducir_musica(id)
+{	
+	if(musica_audio && !musica_pausada)
+		musica_audio.pause();
+	musica_audio = reproducir_sonido(id);	
+	musica_audio.volume = .5;	
+	if(musica_pausada)
+		musica_audio.pause();	
+}
+
+function pausar_musica()
+{
+	if(musica_audio.paused)
+		musica_audio.play();	
+	else
+	{
+		musica_audio.pause();
+	}
+}
+
+
+function pausar_todos_los_sonidos()
+{
+	let audios = document.getElementsByTagName("audio");
+	for(var audio of audios)
+		audio.pause();
+}
+
+function reproducir_ambiente(id)
+{
+	reproducir_sonido(id);	
+}
+
+function reproducir_sonido(id, continuar)
+{
+	let audio = document.getElementById(id);
+	if(!continuar)
+		audio.currentTime = 0;	
+	audio.play();
+	return audio;
+}
+
+function pausa_sonido(id)
+{
+	let audio = document.getElementById(id);
+	audio.pause();
+}
+
+
+function reproducir_sonido_aleatorio(array_sonidos)
+{
+	let n = Math.floor(Math.random() * array_sonidos.length);
+	reproducir_sonido(array_sonidos[n]);	
+}
+
+
+
+function aumenta_puntuacion(valor)
+{
+	mundo.jugador.puntuacion += valor;
+	reproducir_sonido(mundo.nivel.objetos.moneda.sonidos.recolectar);
+}
+
+
+
+
+function dibuja_luz(ctx)
+{
+	return true;
+	// https://developer.mozilla.org/es/docs/Web/Guide/HTML/Canvas_tutorial/Pixel_manipulation_with_canvas
+	var width = ctx.canvas.width;
+	var data = ctx.getImageData(width -  mundo.nivel.sol.right,  mundo.nivel.sol.top,  mundo.nivel.sol.radio * 2, mundo.nivel.sol.radio * 2);
+	var puntos = 50;
+	// centro del sol
+	var radio = mundo.nivel.sol.radio;
+	var x0 = radio;
+	var y0 = radio;
+	var tapado = 0;
+	for(var i = 0; i < puntos; i++)
+	{
+		var x = x0 + radio * (i/puntos) * Math.cos(i);
+		var y = y0 + radio * (i/puntos) * Math.sin(i);
+		var idx = y * (width * 4) + x * 4;
+		var hay_color = 255 - data[idx] + 255 - data[idx + 1];
+		if(hay_color > 6)
+			tapado++;
+	}
+	ctx.fillStyle = "white";
+	ctx.arc(x0, y0, mundo.nivel.sol.radio, 0, 2 * Math.PI);
+	ctx.globalAlpha = tapado / puntos;
+	ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+	ctx.globalAlpha = 1;
+}
+
+
+function dibuja_puntuacion(ctx)
+{
+	ctx.font = "30px Arial";
+	//ctx.fillStyle = "white";
+	//ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);	
+	ctx.fillStyle = "rgb(100, 40, 0)";
+	ctx.textAlign = "left";
+	ctx.fillText(mundo.jugador.puntuacion, 20, 40);
+}
+
+
+var delta, t_ahora, t_anterior = 0;
+
+function calcula_refresco(t)
+{
+	if(!t) t = performance.now();
+	t_ahora = t;
+	delta = t_ahora - t_anterior;
+	t_anterior = t_ahora;
+}
+
+var stats = {
+		n: 0
+	};
+function estadisticas(ctx)
+{	
+	stats.frameRatio = 60 / (1000 / delta);
+	
+	var i = 20;
+	let x = i * mundo.nivel.bloque.ancho - mundo.camara.x;
+	let altura = mundo.nivel.suelo[i];
+	
+	stats.x_ideal = stats.x_anterior - mundo.jugador.velocidad_x * delta/(1000/60);
+	stats.x_real = x;
+	stats.x_anterior = stats.x_real;
+	
+	// posicion X del jugador
+	ctx2.fillStyle = "rgb(150, 255, 50)";
+	ctx2.fillRect(stats.n, 50 + stats.x_ideal - stats.x_real,1,1);	
+	
+	/// estadísticas
+	ctx2.fillStyle = "rgb(255, 0, 0)";
+	ctx2.fillRect(stats.n, stats.frameRatio*100,1,1);	
+	
+	stats.n++;
+	
+	// FPS
+	ctx.font = "30px Arial";
+	ctx.fillStyle = "rgb(100, 40, 0)";
+	ctx.textAlign = "right";
+	ctx.fillText(Math.round(600/stats.frameRatio) / 10, ctx.canvas.width - 20, 40);
+	
+	
+	// posicion de bloque
+	ctx.font = "20px Arial";
+	ctx.textAlign = "center";
+	let pos = Math.floor(mundo.jugador.x / mundo.nivel.bloque.ancho);
+	ctx.fillText(pos, ctx.canvas.width / 2, 40);
+	ctx.fillText("X: "+Math.floor(mundo.jugador.x), ctx.canvas.width / 2, 60);
+	ctx.fillText("Y: "+Math.floor(mundo.jugador.y), ctx.canvas.width / 2, 80);
+	ctx.fillText("CY: "+Math.floor(mundo.camara.x), ctx.canvas.width / 2, 100);
+	ctx.fillText("CY: "+Math.floor(mundo.camara.y), ctx.canvas.width / 2, 120);
+}
+
+function iniciar_juego()
+{
+	let portada = document.getElementById("portada");
+	let juego = document.getElementById("juego");
+	portada.style.display = "none";
+	juego.style.display = "block";	
+	
+	iniciar_nivel();	
+}
+
+var contador_sonido = 0;
+var mostrando_puntuacion_final = 0;
+function incrementar_puntuacion()
+{
+	if(contador_sonido++% 17 == 0)
+	reproducir_sonido(mundo.nivel.objetos.moneda.sonidos.recolectar);
+	mostrando_puntuacion_final = Math.min(mundo.jugador.puntuacion, mostrando_puntuacion_final + Math.ceil(mundo.jugador.puntuacion/120));
+	if(mostrando_puntuacion_final < mundo.jugador.puntuacion)
+		requestAnimationFrame(incrementar_puntuacion);
+	else
+	{
+		setTimeout(function()
+		{
+			let boton_retornar = document.getElementById("boton_retornar");
+			boton_retornar.style.opacity = 1;
+		}, 500);
+	}
+	
+	let puntuacion_final = document.getElementById("puntuacion_final");
+	puntuacion_final.innerHTML = mostrando_puntuacion_final;	
+}
+
+function finalizar_juego()
+{
+	finalizar_listeners();
+	
+	estado_juego = "final";
+	let juego = document.getElementById("juego");
+	let pantalla_final = document.getElementById("pantalla_final");
+	
+	juego.style.display = "none";
+	pantalla_final.style.display = "flex";
+	
+	mostrando_puntuacion_final = 0;
+	requestAnimationFrame(incrementar_puntuacion);
+	pausar_todos_los_sonidos();
+	reproducir_musica(mundo.musica.puntuacion);
+}
+
+</script>
+<div id="portada">
+	<img src="sprites/portada.png">	
+	<button onclick="iniciar_juego()">COMENZAR</button>
+</div>
+<div id="carga"><p>100%</p></div>
+<div id="pregunta">
+	<img src="sprites/mago.png">
+	<p>¿Estás listo para la aventura?</p>
+	<p> </p>
+	<button onclick="ir_a_portada()">Estoy listo</button>
+	<p> </p>
+	<button onclick="location.href='https://www.google.com/search?q=google+tengo+miedo+mam%C3%A1'">¡Tengo miedo mamá!</button>
+</div>
+<div id="juego"> 	
+	<div id="cielo"></div>
+	<img id="sol" src="sprites/sol.png"></img>
+	<canvas id="canvas_cielo"></canvas>	
+	<div id="cielo_nubes"></div>
+	<div id="montañas"></div>
+	<div id="arboles"></div>
+	<canvas id="canvas_suelo_detras"></canvas>	
+	<canvas id="canvas_juego"></canvas>	
+	<canvas id="canvas_suelo_delante"></canvas>	
+</div>
+<div id="pantalla_final">
+	<p id="puntuacion_final"></p>
+	<img src="sprites/redhaired_stood0.png">
+	<p> </p>
+	<button id="boton_retornar" onclick="ir_a_portada()">Volver</button>
+</div>
+<canvas id="stats"></canvas>
+
+<style>
+	html {background: black}
+	html,body {margin:0; padding: 0; overflow: hidden}
+	* {user-select: none}
+	#recursos img {display: none}
+	
+	#portada {background: #78b538; display: none; flex-direction: column; align-items: center; width: 100vmax; height: 100vmin}
+	#portada img {max-width: 100vmax; max-height: 100vmin}
+	
+	button {padding: 10px; font-size: 2em}
+	#portada button {position: absolute; right: 5%; bottom: 5%}
+	
+	
+	#juego img, canvas {
+		image-rendering: optimizeSpeed;
+		image-rendering: -moz-crisp-edges;
+		image-rendering: -webkit-optimize-contrast;
+		image-rendering: optimize-contrast;
+		image-rendering: pixelated;
+		-ms-interpolation-mode: nearest-neighbor;
+	}	
+	#carga {background: #000; color: white; width: 100%; height: 100%}
+	#carga p {width: 100vmax; font-size: 40px; position: absolute; top: 45%; text-align: center}
+	#juego {width: 100vmax; height: 100vmin; display:none; position: relative}
+	/* #juego {display: flex; height: 100%; justify-content: center; align-items: center} */
+	#juego > * {
+		position: absolute; top:0; left: 0;
+		min-width: 100%;
+		min-height: 100%;
+	}
+	#arboles {
+		background: url(sprites/arboles.png) 0 calc(100vmin - 220px) repeat-x;		
+	}
+	
+	#sol {left: calc(100vmax - 90px); top: 90px; display: block; min-width: unset; min-height: unset}
+	
+	#cielo {
+		background: #87ceeb
+	}
+	
+	#montañas {
+		background: url(sprites/fondo.png) center bottom repeat-x;
+	}
+	
+	#cielo_nubes {
+		background: url(sprites/nubes_cielo.png) left top repeat-x;
+		width: 100vmax;
+		height: 100vmin;
+		background-size: cover;
+	}
+	
+	#canvas_juego {
+		
+	}
+	
+	#canvas_suelo_delante,
+	#canvas_suelo_detras
+	{
+		width: unset;
+		height: unset;
+	}
+	
+	#canvas_suelo_delante
+	{
+		z-index: 200;
+	}
+	
+	#pregunta {
+		background: rgb(219,193,41);
+background: linear-gradient(0deg, rgba(219,193,41,1) 0%, rgba(134,46,64,1) 28%, rgba(0,0,0,1) 100%);
+	}
+	#pregunta img {position: absolute; left: 50%; top: 20px; height: 100%; margin-left: -50%}
+	#pregunta p {color: white; font-size: 1.5em}
+	#pregunta, 
+	#pantalla_final
+	{
+			display: none; height: 100%; flex-direction: column; align-items: center; justify-content: center;
+	}
+	
+	#puntuacion_final {color: yellow; font-size: 3em}
+	
+	@media (max-height: 500px) {
+		p {margin: 24px 0}
+		#montañas {background-position: center center}
+		button {font-size: 1.5em}
+	}
+	
+	
+	
+	@media only screen and (orientation:portrait) { 
+	body {
+		transform: translateX(100vmin) rotate(90deg);
+		width: 100vmax;
+		height: 100vmin;
+		overflow: hidden;
+		position: absolute;
+		top: 0;
+		left: 0;
+		transform-origin: 0 0;
+	}}
+	
+	
+</style>
+
+
+<div id="recursos">
+<img src="sprites/redhaired_stood0.png" id="parado1">
+<img src="sprites/redhaired01.png" id="corriendo1">
+<img src="sprites/redhaired02.png" id="corriendo2">
+<img src="sprites/redhaired03.png" id="corriendo3">
+<img src="sprites/redhaired04.png" id="corriendo4">
+<img src="sprites/redhaired05.png" id="corriendo5">
+<img src="sprites/redhaired06.png" id="corriendo6">
+<img src="sprites/redhaired07.png" id="corriendo7">
+<img src="sprites/redhaired08.png" id="corriendo8">
+<img src="sprites/redhaired09.png" id="corriendo9">
+<img src="sprites/redhaired00.png" id="corriendo10">
+<img src="sprites/redhaired06.png" id="muerto1">
+<img src="sprites/redhaired03.png" id="muerto2">
+<img src="sprites/redhaired05.png" id="saltando1">
+<img src="sprites/redhaired07.png" id="cayendo1">
+<img src="sprites/redhaired08.png" id="rebotando1">
+<img src="sprites/bird_volando0.png" id="pajaro_volando1">
+<img src="sprites/bird_volando1.png" id="pajaro_volando2">
+<img src="sprites/bird_volando2.png" id="pajaro_volando3">
+<img src="sprites/bird_volando3.png" id="pajaro_volando4">
+<img src="sprites/sprite_flying_away0.png" id="pajaro_huyendo1">
+<img src="sprites/sprite_flying_away1.png" id="pajaro_huyendo2">
+<img src="sprites/tortugab0.png" id="tortuga_normal1">
+<img src="sprites/tortugab1.png" id="tortuga_normal2">
+<img src="sprites/tortugab2.png" id="tortuga_normal3">
+<img src="sprites/tortugab3.png" id="tortuga_normal4">
+<img src="sprites/tortugab4.png" id="tortuga_normal5">
+<img src="sprites/tortugab5.png" id="tortuga_normal6">
+<img src="sprites/tortugab_esconde0.png" id="tortuga_asustada1">
+<img src="sprites/tortugab_esconde1.png" id="tortuga_asustada2">
+<img src="sprites/tortugab_esconde2.png" id="tortuga_asustada3">
+<img src="sprites/tortugab_esconde3.png" id="tortuga_asustada4">
+<img src="sprites/tortugab_esconde4.png" id="tortuga_asustada5">
+<img src="sprites/nube_guay1.png" id="nube1">
+<img src="sprites/nube_guay2.png" id="nube2">
+<img src="sprites/nube_guay3.png" id="nube3">
+<img src="sprites/nube_guay4.png" id="nube4">
+<img src="sprites/hierba0.png" id="hierba">
+<img src="sprites/cesped.png" id="cesped">
+<img src="sprites/moneda1.png" id="moneda1">
+<img src="sprites/moneda4.png" id="moneda2">
+<img src="sprites/moneda3.png" id="moneda3">
+<img src="sprites/moneda4.png" id="moneda4">
+<img src="sprites/gota1.png" id="gota1">
+<img src="sprites/plataforma.png" id="plataforma">
+<img src="sprites/ground1.png" id="suelo">
+<img src="sprites/flower.png" id="flor1">
+<img src="sprites/fondo.png" id="fondo">
+<img src="sprites/tree1.png" id="arbol1">
+<img src="sprites/bush1.png" id="arbusto1">
+<img src="sprites/seta0.png" id="seta1">
+<img src="sprites/seta1.png" id="seta2">
+
+
+<audio loop src="sonidos/pajaros_fondo.mp3" id="mus_ambiente1"></audio>
+<audio loop src="musica/bensound-psychedelic.mp3" id="mus_musica1"></audio>
+<audio loop src="musica/bensound-theduel.mp3" id="mus_musica2"></audio>
+<audio src="musica/final_nivel.mp3" id="mus_puntuacion1"></audio>
+
+<audio src="sonidos/paso1.wav" id="fx_paso1"></audio>
+<audio src="sonidos/paso2.wav" id="fx_paso2"></audio>
+<audio src="sonidos/paso3.wav" id="fx_paso3"></audio>
+<audio src="sonidos/paso4.wav" id="fx_paso4"></audio>
+<audio src="sonidos/paso5.wav" id="fx_paso5"></audio>
+<audio src="sonidos/paso6.wav" id="fx_paso6"></audio>
+<audio src="sonidos/paso7.wav" id="fx_paso7"></audio>
+<audio src="sonidos/salto.wav" id="fx_salto1"></audio>
+<audio src="sonidos/rebote.mp3" id="fx_rebote1"></audio>
+<audio src="sonidos/muelle.wav" id="fx_rebote2"></audio>
+<audio src="sonidos/muelle2.mp3" id="fx_rebote3"></audio>
+<audio src="sonidos/muerte1.wav" id="fx_muerte1"></audio>
+<audio src="sonidos/muerte2.wav" id="fx_muerte2"></audio>
+<audio src="sonidos/suelo3.wav" id="fx_suelo"></audio>
+<audio src="sonidos/tortuga.wav" id="fx_salto_tortuga"></audio>
+<audio src="sonidos/suelo2.wav" id="fx_plataforma"></audio>
+<audio src="sonidos/pajaro_huyendo.wav" id="fx_huyendo1"></audio>
+<audio src="sonidos/moneda.wav" id="fx_moneda"></audio>
+<audio src="sonidos/lluvia.mp3" id="fx_lluvia"></audio>
+
+</div>
